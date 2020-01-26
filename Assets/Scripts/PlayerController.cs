@@ -2,39 +2,17 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(MoveController))]
 public class PlayerController : MonoBehaviour {
-    public float moveSpeed;
-    public float jumpForce;
-    public CharacterController cc;
-    public float gravityScale;
-
-    private Vector3 moveDirection;
+    public MoveController moveController;
 
     void Start() {
-        cc = GetComponent<CharacterController>();
+        moveController = GetComponent<MoveController>();
     }
 
     void Update() {
-        float dx = Input.GetAxis("Horizontal") * moveSpeed;
-        moveDirection = new Vector3(dx, moveDirection.y, 0f);
-        if (cc.isGrounded) {
-            if (Input.GetButtonDown("Jump")) {
-                moveDirection.y = jumpForce;
-            } else {
-                moveDirection.y = moveDirection.y + Physics.gravity.y*gravityScale*Time.deltaTime;
-                if (moveDirection.y < 0f) {
-                    moveDirection.y = 0f;
-                }
-            }
-        } else {
-            moveDirection.y = moveDirection.y + Physics.gravity.y*gravityScale*Time.deltaTime;
-        }
-        Debug.Log(moveDirection);
-        cc.Move(moveDirection * Time.deltaTime);
     }
 
     void FixedUpdate() {
-        float motor = Input.GetAxis("Vertical");
-        float steering = Input.GetAxis("Horizontal");
     }
 }

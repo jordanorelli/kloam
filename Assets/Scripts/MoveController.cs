@@ -5,6 +5,7 @@ using UnityEngine;
 [RequireComponent(typeof(BoxCollider))]
 public class MoveController : MonoBehaviour
 {
+    public LayerMask collisionMask;
     public const float skinWidth = 0.015f;
     public int horizontalRayCount = 4;
     public int verticalRayCount = 4;
@@ -16,16 +17,39 @@ public class MoveController : MonoBehaviour
 
     void Start() {
         collider = GetComponent<BoxCollider>();
+        CalculateRaySpacing();
     }
 
-    void Update() {
+    public void Move(Vector3 velocity) {
         UpdateRaycastOrigins();
-        CalculateRaySpacing();
+        VerticalCollisions(ref velocity);
+        transform.Translate(velocity);
+    }
+
+    private void VerticalCollisions(ref Vector3 velocity) {
+        float directionY = Mathf.Sign(velocity.y);
+        float rayLength = Mathf.Abs(velocity.y) + skinWidth;
 
         // bottom face
         for (int i = 0; i < verticalRayCount; i++) {
             for (int j = 0; j < verticalRayCount; j++) {
-                Debug.DrawRay(raycastOrigins.bottomFrontLeft + Vector3.right * verticalRaySpacing * i - Vector3.back * verticalRaySpacing * j, Vector3.down, Color.red);
+                Vector3 rayOrigin = (directionY == -1) ? raycastOrigins.bottomFrontLeft : raycastOrigins.topFrontLeft;
+                rayOrigin += Vector3.right * (verticalRaySpacing * i + velocity.x);
+                RaycastHit[] hits = Physics.RaycastAll(rayOrigin, Vector3.up * directionY, rayLength, collisionMask);
+
+                if (hits.Length > 0) {
+                    float minHitDist = 0f;
+                    foreach(RaycastHit hit in hits) {
+                        if (hit.distance > minHitDist) {
+                            minHitDist = hit.distance;
+                        }
+                    }
+                    velocity.y = (minHitDist - skinWidth) * directionY;
+                    rayLength = minHitDist;
+                    Debug.DrawRay(raycastOrigins.bottomFrontLeft + Vector3.right * verticalRaySpacing * i - Vector3.back * verticalRaySpacing * j, Vector3.down * 0.25f, Color.red);
+                } else {
+                    Debug.DrawRay(raycastOrigins.bottomFrontLeft + Vector3.right * verticalRaySpacing * i - Vector3.back * verticalRaySpacing * j, Vector3.down * 0.25f, Color.green);
+                }
             }
         }
     }

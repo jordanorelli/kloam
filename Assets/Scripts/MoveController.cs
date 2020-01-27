@@ -9,7 +9,6 @@ public class MoveController : MonoBehaviour
     public const float skinWidth = 0.015f;
     public int horizontalRayCount = 4;
     public int verticalRayCount = 4;
-    public int forwardRayCount = 4;
     public CollisionInfo collisions;
     public float maxClimbAngle = 80f;
 
@@ -17,7 +16,6 @@ public class MoveController : MonoBehaviour
     private RaycastOrigins raycastOrigins;
     private float horizontalRaySpacing;
     private float verticalRaySpacing;
-    private float forwardRaySpacing;
 
     void Start() {
         collider = GetComponent<BoxCollider>();
@@ -28,54 +26,51 @@ public class MoveController : MonoBehaviour
         UpdateRaycastOrigins();
         collisions.Reset();
 
-        HorizontalCollisions(ref velocity);
-        VerticalCollisions(ref velocity);
-        // if (velocity.x != 0) {
-        // }
-        // if (velocity.y != 0) {
-        // }
+        if (velocity.x != 0) {
+            HorizontalCollisions(ref velocity);
+        }
+        if (velocity.y != 0) {
+            VerticalCollisions(ref velocity);
+        }
         transform.Translate(velocity);
     }
 
     private void HorizontalCollisions(ref Vector3 velocity) {
-        // https://www.youtube.com/watch?v=cwcC2tIKObU&t=331s
         float directionX = Mathf.Sign(velocity.x);           // -1 for left, 1 for right
         float rayLength = Mathf.Abs(velocity.x) + skinWidth;
 
         for (int i = 0; i < horizontalRayCount; i++) {
-            for (int j = 0; j < forwardRayCount; j++) {
-                Vector3 rayOrigin = (directionX == -1) ? raycastOrigins.bottomFrontLeft : raycastOrigins.bottomFrontRight;
-                rayOrigin += Vector3.up * (horizontalRaySpacing * i);
-                rayOrigin += Vector3.forward * (forwardRaySpacing * j);
+            Vector3 rayOrigin = (directionX == -1) ? raycastOrigins.bottomLeft : raycastOrigins.bottomRight;
+            rayOrigin += Vector3.up * (horizontalRaySpacing * i);
 
-                RaycastHit[] hits = Physics.RaycastAll(rayOrigin, Vector3.right * directionX, rayLength, collisionMask);
-                if (hits.Length == 0) {
-                    Debug.DrawRay(rayOrigin + velocity, Vector3.right * directionX * rayLength, Color.magenta);
-                    continue;
+            RaycastHit[] hits = Physics.RaycastAll(rayOrigin, Vector3.right * directionX, rayLength, collisionMask);
+            if (hits.Length == 0) {
+                Debug.DrawRay(rayOrigin + velocity, Vector3.right * directionX * rayLength, Color.magenta);
+                continue;
+            }
+
+            RaycastHit hit = hits[0];
+            for (int h = 1; h < hits.Length; h++) {
+                if (hits[h].distance < hit.distance) {
+                    hit = hits[h];
                 }
+            }
 
-                RaycastHit hit = hits[0];
-                for (int h = 1; h < hits.Length; h++) {
-                    if (hits[h].distance < hit.distance) {
-                        hit = hits[h];
-                    }
-                }
+            float slopeAngle = Vector3.Angle(hit.normal, Vector3.up);
+            if (i == 0) {
+                Debug.LogFormat("Slope angle: {0}", slopeAngle);
+                ClimbSlope(ref velocity, slopeAngle);
+            }
 
-                float slopeAngle = Vector3.Angle(hit.normal, Vector3.up);
-                if (i == 0 && j == 0) {
-                    Debug.LogFormat("Slope angle: {0}", slopeAngle);
-                }
+            velocity.x = (hit.distance - skinWidth) * directionX;
+            // Debug.LogFormat("with RayLength {0} MinHitDist {1} setting velocity.y to {2}", rayLength, hit.distance, velocity.y);
+            rayLength = hit.distance;
+            Debug.DrawRay(rayOrigin + velocity, Vector3.right * directionX * rayLength, Color.red);
 
-                velocity.x = (hit.distance - skinWidth) * directionX;
-                // Debug.LogFormat("with RayLength {0} MinHitDist {1} setting velocity.y to {2}", rayLength, hit.distance, velocity.y);
-                rayLength = hit.distance;
-                Debug.DrawRay(rayOrigin + velocity, Vector3.right * directionX * rayLength, Color.red);
-
-                if (directionX == -1) {
-                    collisions.left = true;
-                } else {
-                    collisions.right = true;
-                }
+            if (directionX == -1) {
+                collisions.left = true;
+            } else {
+                collisions.right = true;
             }
         }
     }
@@ -85,49 +80,48 @@ public class MoveController : MonoBehaviour
         float rayLength = Mathf.Abs(velocity.y) + skinWidth;
 
         for (int i = 0; i < verticalRayCount; i++) {
-            for (int j = 0; j < forwardRayCount; j++) {
-                Vector3 rayOrigin = (directionY == -1) ? raycastOrigins.bottomFrontLeft : raycastOrigins.topFrontLeft;
-                rayOrigin += Vector3.right * (verticalRaySpacing * i);
-                rayOrigin += Vector3.forward * (forwardRaySpacing * j);
-                RaycastHit[] hits = Physics.RaycastAll(rayOrigin, Vector3.up * directionY, rayLength, collisionMask);
-                if (hits.Length == 0) {
-                    Debug.DrawRay(rayOrigin + velocity, Vector3.up * directionY * rayLength * 10, Color.green);
-                    continue;
+            Vector3 rayOrigin = (directionY == -1) ? raycastOrigins.bottomLeft : raycastOrigins.topLeft;
+            rayOrigin += Vector3.right * (verticalRaySpacing * i);
+            RaycastHit[] hits = Physics.RaycastAll(rayOrigin, Vector3.up * directionY, rayLength, collisionMask);
+            if (hits.Length == 0) {
+                Debug.DrawRay(rayOrigin + velocity, Vector3.up * directionY * rayLength, Color.green);
+                continue;
+            }
+            RaycastHit hit = hits[0];
+            for (int h = 1; h < hits.Length; h++) {
+                if (hits[h].distance < hit.distance) {
+                    hit = hits[h];
                 }
-                RaycastHit hit = hits[0];
-                for (int h = 1; h < hits.Length; h++) {
-                    if (hits[h].distance < hit.distance) {
-                        hit = hits[h];
-                    }
-                }
+            }
 
-                velocity.y = (hit.distance - skinWidth) * directionY;
-                // Debug.LogFormat("with RayLength {0} MinHitDist {1} setting velocity.y to {2}", rayLength, hit.distance, velocity.y);
-                rayLength = hit.distance;
-                Debug.DrawRay(rayOrigin + velocity, Vector3.up * directionY * rayLength, Color.red);
+            velocity.y = (hit.distance - skinWidth) * directionY;
+            // Debug.LogFormat("with RayLength {0} MinHitDist {1} setting velocity.y to {2}", rayLength, hit.distance, velocity.y);
+            rayLength = hit.distance;
+            Debug.DrawRay(rayOrigin + velocity, Vector3.up * directionY * rayLength, Color.red);
 
-                if (directionY == -1) {
-                    collisions.below = true;
-                } else {
-                    collisions.above = true;
-                }
+            if (directionY == -1) {
+                collisions.below = true;
+            } else {
+                collisions.above = true;
             }
         }
     }
 
+    private void ClimbSlope(ref Vector3 velocity, float slopeAngle) {
+        float dist = Mathf.Abs(velocity.x);
+        velocity.y = Mathf.Sin(slopeAngle * Mathf.Deg2Rad) * dist;
+        velocity.x = Mathf.Cos(slopeAngle * Mathf.Deg2Rad) * dist * Mathf.Sign(velocity.x);
+    }
+
     void UpdateRaycastOrigins() {
         Bounds bounds = collider.bounds;
+        float depth = (bounds.max.z + bounds.min.z) * 0.5f;
         bounds.Expand(skinWidth * -2);
 
-        raycastOrigins.bottomFrontLeft = new Vector3(bounds.min.x, bounds.min.y, bounds.min.z);  // 0 0 0
-        raycastOrigins.bottomBackLeft = new Vector3(bounds.min.x, bounds.min.y, bounds.max.z);   // 0 0 1
-        raycastOrigins.topFrontLeft = new Vector3(bounds.min.x, bounds.max.y, bounds.min.z);     // 0 1 0
-        raycastOrigins.topBackLeft = new Vector3(bounds.min.x, bounds.max.y, bounds.max.z);      // 0 1 1
-
-        raycastOrigins.bottomFrontRight = new Vector3(bounds.max.x, bounds.min.y, bounds.min.z); // 1 0 0
-        raycastOrigins.bottomBackRight = new Vector3(bounds.max.x, bounds.min.y, bounds.max.z);  // 1 0 1
-        raycastOrigins.topFrontRight = new Vector3(bounds.max.x, bounds.max.y, bounds.min.z);    // 1 1 0
-        raycastOrigins.topBackRight = new Vector3(bounds.max.x, bounds.max.y, bounds.max.z);     // 1 1 1
+        raycastOrigins.bottomLeft = new Vector3(bounds.min.x, bounds.min.y, depth);
+        raycastOrigins.topLeft = new Vector3(bounds.min.x, bounds.max.y, depth);
+        raycastOrigins.bottomRight = new Vector3(bounds.max.x, bounds.min.y, depth);
+        raycastOrigins.topRight = new Vector3(bounds.max.x, bounds.max.y, depth);
     }
 
     void CalculateRaySpacing() {
@@ -136,24 +130,18 @@ public class MoveController : MonoBehaviour
 
         if (horizontalRayCount < 2) { horizontalRayCount = 2; }
         if (verticalRayCount < 2) { verticalRayCount = 2; }
-        if (forwardRayCount < 2) { forwardRayCount = 2; }
 
         horizontalRaySpacing = bounds.size.y / (horizontalRayCount - 1);
         verticalRaySpacing = bounds.size.x / (verticalRayCount - 1);
-        forwardRaySpacing = bounds.size.z / (forwardRayCount - 1);
     }
 
     public bool Grounded() { return collisions.below; }
 
     struct RaycastOrigins {
-        public Vector3 topBackLeft;
-        public Vector3 topBackRight;
-        public Vector3 topFrontLeft;
-        public Vector3 topFrontRight;
-        public Vector3 bottomBackLeft;
-        public Vector3 bottomBackRight;
-        public Vector3 bottomFrontLeft;
-        public Vector3 bottomFrontRight;
+        public Vector3 topLeft;
+        public Vector3 topRight;
+        public Vector3 bottomLeft;
+        public Vector3 bottomRight;
     }
 
     public struct CollisionInfo {

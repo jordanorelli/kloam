@@ -44,26 +44,26 @@ public class MoveController : MonoBehaviour
                 rayOrigin += Vector3.up * (horizontalRaySpacing * i);
                 rayOrigin += Vector3.back * (horizontalRaySpacing * j);
                 RaycastHit[] hits = Physics.RaycastAll(rayOrigin, Vector3.right * directionX, rayLength, collisionMask);
-
-                if (hits.Length > 0) {
-                    float minHitDist = hits[0].distance;
-                    foreach(RaycastHit hit in hits) {
-                        if (hit.distance < minHitDist) {
-                            minHitDist = hit.distance;
-                        }
-                    }
-                    velocity.x = (minHitDist - skinWidth) * directionX;
-                    Debug.LogFormat("with RayLength {0} MinHitDist {1} setting velocity.y to {2}", rayLength, minHitDist, velocity.y);
-                    rayLength = minHitDist;
-                    Debug.DrawRay(rayOrigin, Vector3.right * directionX * rayLength, Color.red);
-
-                    if (directionX == -1) {
-                        collisions.left = true;
-                    } else {
-                        collisions.right = true;
-                    }
-                } else {
+                if (hits.Length == 0) {
                     Debug.DrawRay(rayOrigin, Vector3.right * directionX * rayLength, Color.green);
+                    continue;
+                }
+                RaycastHit hit = hits[0];
+                for (int h = 1; h < hits.Length; h++) {
+                    if (hits[h].distance < hit.distance) {
+                        hit = hits[h];
+                    }
+                }
+
+                velocity.x = (hit.distance - skinWidth) * directionX;
+                Debug.LogFormat("with RayLength {0} MinHitDist {1} setting velocity.y to {2}", rayLength, hit.distance, velocity.y);
+                rayLength = hit.distance;
+                Debug.DrawRay(rayOrigin, Vector3.right * directionX * rayLength, Color.red);
+
+                if (directionX == -1) {
+                    collisions.left = true;
+                } else {
+                    collisions.right = true;
                 }
             }
         }
@@ -79,26 +79,26 @@ public class MoveController : MonoBehaviour
                 rayOrigin += Vector3.right * (verticalRaySpacing * i + velocity.x);
                 rayOrigin += Vector3.forward * (verticalRaySpacing * j + velocity.x);
                 RaycastHit[] hits = Physics.RaycastAll(rayOrigin, Vector3.up * directionY, rayLength, collisionMask);
-
-                if (hits.Length > 0) {
-                    float minHitDist = hits[0].distance;
-                    foreach(RaycastHit hit in hits) {
-                        if (hit.distance < minHitDist) {
-                            minHitDist = hit.distance;
-                        }
-                    }
-                    velocity.y = (minHitDist - skinWidth) * directionY;
-                    Debug.LogFormat("with RayLength {0} MinHitDist {1} setting velocity.y to {2}", rayLength, minHitDist, velocity.y);
-                    rayLength = minHitDist;
-                    Debug.DrawRay(rayOrigin, Vector3.up * directionY * rayLength, Color.red);
-
-                    if (directionY == -1) {
-                        collisions.below = true;
-                    } else {
-                        collisions.above = true;
-                    }
-                } else {
+                if (hits.Length == 0) {
                     Debug.DrawRay(rayOrigin, Vector3.up * directionY * rayLength, Color.green);
+                    continue;
+                }
+                RaycastHit hit = hits[0];
+                for (int h = 1; h < hits.Length; h++) {
+                    if (hits[h].distance < hit.distance) {
+                        hit = hits[h];
+                    }
+                }
+
+                velocity.y = (hit.distance - skinWidth) * directionY;
+                Debug.LogFormat("with RayLength {0} MinHitDist {1} setting velocity.y to {2}", rayLength, hit.distance, velocity.y);
+                rayLength = hit.distance;
+                Debug.DrawRay(rayOrigin, Vector3.up * directionY * rayLength, Color.red);
+
+                if (directionY == -1) {
+                    collisions.below = true;
+                } else {
+                    collisions.above = true;
                 }
             }
         }

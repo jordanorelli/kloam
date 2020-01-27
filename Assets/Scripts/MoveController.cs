@@ -130,6 +130,8 @@ public class MoveController : MonoBehaviour
         verticalRaySpacing = bounds.size.x / (verticalRayCount - 1);
     }
 
+    public bool Grounded() { return collisions.below; }
+
     struct RaycastOrigins {
         public Vector3 topBackLeft;
         public Vector3 topBackRight;

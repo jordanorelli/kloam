@@ -76,9 +76,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7e392b35ca7959444b61a3e29a242f2b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  jumpHeight: 3.5
+  jumpDuration: 0.4
   moveSpeed: 6
-  moveController: {fileID: 0}
-  velocity: {x: 0, y: 0, z: 0}
 --- !u!1 &6383496741659177281
 GameObject:
   m_ObjectHideFlags: 0

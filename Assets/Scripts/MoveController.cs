@@ -9,6 +9,7 @@ public class MoveController : MonoBehaviour
     public const float skinWidth = 0.015f;
     public int horizontalRayCount = 4;
     public int verticalRayCount = 4;
+    public int forwardRayCount = 4;
     public CollisionInfo collisions;
     public float maxClimbAngle = 80f;
 
@@ -16,6 +17,7 @@ public class MoveController : MonoBehaviour
     private RaycastOrigins raycastOrigins;
     private float horizontalRaySpacing;
     private float verticalRaySpacing;
+    private float forwardRaySpacing;
 
     void Start() {
         collider = GetComponent<BoxCollider>();
@@ -41,14 +43,14 @@ public class MoveController : MonoBehaviour
         float rayLength = Mathf.Abs(velocity.x) + skinWidth;
 
         for (int i = 0; i < horizontalRayCount; i++) {
-            for (int j = 0; j < horizontalRayCount; j++) {
+            for (int j = 0; j < forwardRayCount; j++) {
                 Vector3 rayOrigin = (directionX == -1) ? raycastOrigins.bottomFrontLeft : raycastOrigins.bottomFrontRight;
                 rayOrigin += Vector3.up * (horizontalRaySpacing * i);
-                rayOrigin += Vector3.back * (horizontalRaySpacing * j);
+                rayOrigin += Vector3.forward * (forwardRaySpacing * j);
 
                 RaycastHit[] hits = Physics.RaycastAll(rayOrigin, Vector3.right * directionX, rayLength, collisionMask);
                 if (hits.Length == 0) {
-                    Debug.DrawRay(rayOrigin, Vector3.right * directionX * rayLength * 10, Color.magenta);
+                    Debug.DrawRay(rayOrigin + velocity, Vector3.right * directionX * rayLength, Color.magenta);
                     continue;
                 }
 
@@ -67,7 +69,7 @@ public class MoveController : MonoBehaviour
                 velocity.x = (hit.distance - skinWidth) * directionX;
                 // Debug.LogFormat("with RayLength {0} MinHitDist {1} setting velocity.y to {2}", rayLength, hit.distance, velocity.y);
                 rayLength = hit.distance;
-                Debug.DrawRay(rayOrigin, Vector3.right * directionX * rayLength, Color.red);
+                Debug.DrawRay(rayOrigin + velocity, Vector3.right * directionX * rayLength, Color.red);
 
                 if (directionX == -1) {
                     collisions.left = true;
@@ -83,13 +85,13 @@ public class MoveController : MonoBehaviour
         float rayLength = Mathf.Abs(velocity.y) + skinWidth;
 
         for (int i = 0; i < verticalRayCount; i++) {
-            for (int j = 0; j < verticalRayCount; j++) {
+            for (int j = 0; j < forwardRayCount; j++) {
                 Vector3 rayOrigin = (directionY == -1) ? raycastOrigins.bottomFrontLeft : raycastOrigins.topFrontLeft;
-                rayOrigin += Vector3.right * (verticalRaySpacing * i + velocity.x);
-                rayOrigin += Vector3.forward * (verticalRaySpacing * j + velocity.x);
+                rayOrigin += Vector3.right * (verticalRaySpacing * i);
+                rayOrigin += Vector3.forward * (forwardRaySpacing * j);
                 RaycastHit[] hits = Physics.RaycastAll(rayOrigin, Vector3.up * directionY, rayLength, collisionMask);
                 if (hits.Length == 0) {
-                    Debug.DrawRay(rayOrigin, Vector3.up * directionY * rayLength * 10, Color.green);
+                    Debug.DrawRay(rayOrigin + velocity, Vector3.up * directionY * rayLength * 10, Color.green);
                     continue;
                 }
                 RaycastHit hit = hits[0];
@@ -102,7 +104,7 @@ public class MoveController : MonoBehaviour
                 velocity.y = (hit.distance - skinWidth) * directionY;
                 // Debug.LogFormat("with RayLength {0} MinHitDist {1} setting velocity.y to {2}", rayLength, hit.distance, velocity.y);
                 rayLength = hit.distance;
-                Debug.DrawRay(rayOrigin, Vector3.up * directionY * rayLength, Color.red);
+                Debug.DrawRay(rayOrigin + velocity, Vector3.up * directionY * rayLength, Color.red);
 
                 if (directionY == -1) {
                     collisions.below = true;
@@ -134,9 +136,11 @@ public class MoveController : MonoBehaviour
 
         if (horizontalRayCount < 2) { horizontalRayCount = 2; }
         if (verticalRayCount < 2) { verticalRayCount = 2; }
+        if (forwardRayCount < 2) { forwardRayCount = 2; }
 
         horizontalRaySpacing = bounds.size.y / (horizontalRayCount - 1);
         verticalRaySpacing = bounds.size.x / (verticalRayCount - 1);
+        forwardRaySpacing = bounds.size.z / (forwardRayCount - 1);
     }
 
     public bool Grounded() { return collisions.below; }

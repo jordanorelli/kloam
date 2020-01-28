@@ -55,7 +55,11 @@ public class MoveController : MonoBehaviour
                     hit = hits[h];
                 }
             }
-            // hit.collider.gameObject
+
+            if (hit.collider.gameObject.CompareTag("Fatal")) {
+                Destroy(gameObject);
+                return;
+            }
 
             float slopeAngle = Vector3.Angle(hit.normal, Vector3.up);
             if (i == 0 && slopeAngle <= maxClimbAngle) {
@@ -105,6 +109,11 @@ public class MoveController : MonoBehaviour
                 if (hits[h].distance < hit.distance) {
                     hit = hits[h];
                 }
+            }
+
+            if (hit.collider.gameObject.CompareTag("Fatal")) {
+                Destroy(gameObject);
+                return;
             }
 
             velocity.y = (hit.distance - skinWidth) * directionY;

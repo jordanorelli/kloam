@@ -55,6 +55,7 @@ public class MoveController : MonoBehaviour
                     hit = hits[h];
                 }
             }
+            // hit.collider.gameObject
 
             float slopeAngle = Vector3.Angle(hit.normal, Vector3.up);
             if (i == 0 && slopeAngle <= maxClimbAngle) {

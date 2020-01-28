@@ -10,6 +10,7 @@ public class PlayerController : MonoBehaviour {
     public float accelerationTimeAirborne = 0.2f;
     public float accelerationTimeGrounded = 0.05f;
     public Canvas hud;
+    public GameObject soulPrefab;
 
     private Vector3 velocity;
     private float jumpVelocity;
@@ -53,5 +54,7 @@ public class PlayerController : MonoBehaviour {
         if (c) {
             c.SetDead(true);
         }
+        GameObject soul = Instantiate(soulPrefab, transform.position + Vector3.up * 0.5f, transform.rotation);
+        soul.GetComponent<SoulController>().playerName = "fartface";
     }
 }

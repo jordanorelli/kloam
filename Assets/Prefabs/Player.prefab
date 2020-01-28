@@ -64,6 +64,7 @@ MonoBehaviour:
     m_Bits: 2048
   horizontalRayCount: 4
   verticalRayCount: 4
+  maxClimbAngle: 60
 --- !u!114 &5588890751565926871
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -79,6 +80,11 @@ MonoBehaviour:
   jumpHeight: 3.5
   jumpDuration: 0.4
   moveSpeed: 6
+  accelerationTimeAirborne: 0.2
+  accelerationTimeGrounded: 0.05
+  hud: {fileID: 0}
+  soulPrefab: {fileID: 923676258187016684, guid: 80b838e4e488ed64b9ac358ee000f444,
+    type: 3}
 --- !u!1 &6383496741659177281
 GameObject:
   m_ObjectHideFlags: 0

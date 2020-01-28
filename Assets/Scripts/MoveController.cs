@@ -61,6 +61,11 @@ public class MoveController : MonoBehaviour
                 return;
             }
 
+            if (hit.collider.gameObject.CompareTag("Soul")) {
+                Destroy(hit.collider.gameObject);
+                return;
+            }
+
             float slopeAngle = Vector3.Angle(hit.normal, Vector3.up);
             if (i == 0 && slopeAngle <= maxClimbAngle) {
                 float distanceToSlopeStart = 0f;
@@ -113,6 +118,11 @@ public class MoveController : MonoBehaviour
 
             if (hit.collider.gameObject.CompareTag("Fatal")) {
                 Destroy(gameObject);
+                return;
+            }
+
+            if (hit.collider.gameObject.CompareTag("Soul")) {
+                Destroy(hit.collider.gameObject);
                 return;
             }
 

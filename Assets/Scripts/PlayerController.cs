@@ -9,6 +9,7 @@ public class PlayerController : MonoBehaviour {
     public float moveSpeed = 6f;
     public float accelerationTimeAirborne = 0.2f;
     public float accelerationTimeGrounded = 0.05f;
+    public Canvas hud;
 
     private Vector3 velocity;
     private float jumpVelocity;
@@ -43,5 +44,14 @@ public class PlayerController : MonoBehaviour {
     }
 
     void FixedUpdate() {
+    }
+
+    void OnDestroy() {
+        Debug.Log("I'm dead");
+        hud.gameObject.SetActive(true);
+        HudController c = hud.gameObject.GetComponent<HudController>();
+        if (c) {
+            c.SetDead(true);
+        }
     }
 }

@@ -24,4 +24,9 @@ public class SoulController : MonoBehaviour {
     void Update() {
         transform.rotation = cam.transform.rotation * fixedRotation;
     }
+
+    public struct PickupInfo {
+        public string playerName;
+        public Vector3 position;
+    }
 }

@@ -11,18 +11,22 @@ public class PlayerController : MonoBehaviour {
     public float accelerationTimeGrounded = 0.05f;
     public Canvas hud;
     public GameObject soulPrefab;
+    public Networking networking;
 
     private Vector3 velocity;
     private float jumpVelocity;
     private MoveController moveController;
     private float gravity;
     private float moveXSmoothing;
+    private bool quitting;
 
     void Start() {
         moveController = GetComponent<MoveController>();
 
         gravity = -(2*jumpHeight)/Mathf.Pow(jumpDuration, 2f);
         jumpVelocity = Mathf.Abs(gravity) * jumpDuration;
+
+        networking.Connect();
     }
 
     void Update() {
@@ -49,12 +53,35 @@ public class PlayerController : MonoBehaviour {
 
     void OnDestroy() {
         Debug.Log("I'm dead");
-        hud.gameObject.SetActive(true);
-        HudController c = hud.gameObject.GetComponent<HudController>();
-        if (c) {
-            c.SetDead(true);
+        // hud.gameObject.SetActive(true);
+        // HudController c = hud.gameObject.GetComponent<HudController>();
+        // if (c) {
+        //     c.SetDead(true);
+        // }
+        if (!quitting) {
+            GameObject soul = Instantiate(soulPrefab, transform.position + Vector3.up * 0.5f, transform.rotation);
+            soul.GetComponent<SoulController>().playerName = "fartface";
         }
-        GameObject soul = Instantiate(soulPrefab, transform.position + Vector3.up * 0.5f, transform.rotation);
-        soul.GetComponent<SoulController>().playerName = "fartface";
+    }
+
+    void OnCollisionEnter(Collision other) {
+        Debug.LogFormat("Player collided with {0}", other);
+    }
+
+    void OnTriggerEnter(Collider other) {
+        Debug.LogFormat("Player triggered other: {0}", other);
+        if (other.CompareTag("Soul")) {
+            SoulController soul = other.GetComponent<SoulController>();
+            networking.SendCollectSoul(soul.playerName, other.transform.position);
+            Destroy(other.gameObject);
+        }
+        if (other.CompareTag("Fatal")) {
+            networking.SendDeath(transform.position);
+            Destroy(gameObject);
+        }
+    }
+
+    void OnApplicationQuit() {
+        quitting = true;
     }
 }

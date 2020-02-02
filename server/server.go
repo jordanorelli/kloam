@@ -1,8 +1,8 @@
 package main
 
 import (
-	"io/ioutil"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -11,7 +11,9 @@ import (
 
 type server struct {
 	*blammo.Log
-	router *mux.Router
+	router  *mux.Router
+	players map[int]*player
+	join    chan player
 }
 
 func (s *server) init() {
@@ -33,23 +35,27 @@ func (s *server) play(w http.ResponseWriter, r *http.Request) {
 		s.Error("upgrade error: %s", err)
 		return
 	}
-	defer conn.Close()
 
 	s.Info("client connected: %v", conn.RemoteAddr())
-
-	for {
-		_, rd, err := conn.NextReader()
-		if err != nil {
-			s.Error("nextreader error: %s", err)
-			break
-		}
-
-		b, err := ioutil.ReadAll(rd)
-		if err != nil {
-			s.Error("read error: %s", err)
-		} else {
-			s.Child("rcv").Info(string(b))
-		}
+	s.join <- player{
+		conn: conn,
 	}
+}
 
+func (s *server) run() {
+	s.players = make(map[int]*player)
+
+	for pc := 0; true; pc++ {
+		s.step(pc)
+	}
+}
+
+func (s *server) step(pc int) {
+	select {
+	case p := <-s.join:
+		s.Info("received join: %#v", p)
+		p.id = pc
+		p.Log = s.Child("players").Child(strconv.Itoa(p.id))
+		go p.run()
+	}
 }

@@ -1,3 +1,7 @@
+github.com/gorilla/mux v1.7.3 h1:gnP5JzjVOuiZD07fKKToCAOjS0yOpj/qPETTXCCS6hw=
+github.com/gorilla/mux v1.7.3/go.mod h1:1lud6UwP+6orDFRuTfBEV8e9/aOM/c4fVVCaMa2zaAs=
+github.com/gorilla/websocket v1.4.1 h1:q7AeDBpnBk8AogcD4DSag/Ukw/KV+YhzLj2bP5HvKCM=
+github.com/gorilla/websocket v1.4.1/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/jordanorelli/blammo v0.0.0-20200121053404-bd13f6b43c9f h1:m1UX7IV22aEt+hw5R/9MkmB2jdF4kRucP9Z/E/ql1JU=
 github.com/jordanorelli/blammo v0.0.0-20200121053404-bd13f6b43c9f/go.mod h1:ofUhNTXhWoL77wTBOnWpjPN9s244RK1Hn0XiYhE4E1s=
 github.com/jordanorelli/blammo v0.0.0-20200201231725-9fd70eb7c1f2 h1:DH2VZ5Z4paQJe0zViSQENrwbgfrt4yyTeckjureCKOw=

@@ -91,7 +91,16 @@ public class Networking : ScriptableObject {
         Debug.LogFormat("Readbuffer count: {0} offset: {1}", readBuffer.Count, readBuffer.Offset);
         string msg = Encoding.UTF8.GetString(readBuffer.Array, 0, result.Count);
         string[] parts = msg.Split(new char[]{' '}, 2);
+        if (parts.Length != 2) {
+            Debug.LogFormat("dunno how to handle this msg: {0}", msg);
+            return;
+        }
         Debug.LogFormat("first: {0} second: {1}", parts[0], parts[1]);
+        switch (parts[0]) {
+
+        default:
+            break;
+        }
     }
 
     private void autoDisconnect() {

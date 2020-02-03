@@ -12,9 +12,11 @@ import (
 
 type player struct {
 	*blammo.Log
-	conn   *websocket.Conn
-	server *server
-	id     int
+	conn     *websocket.Conn
+	server   *server
+	id       int
+	username string
+	outbox   chan string
 }
 
 func (p *player) run() {
@@ -24,6 +26,7 @@ func (p *player) run() {
 	ctx, cancel := context.WithCancel(context.Background())
 	go p.writeMessages(ctx)
 	p.readMessages(cancel)
+	p.outbox = nil
 	p.conn.Close()
 }
 
@@ -52,7 +55,7 @@ func (p *player) readMessages(cancel func()) {
 			p.Child("rcv").Info(string(b))
 		}
 		p.server.inbox <- message{
-			from: p.id,
+			from: p,
 			text: string(b),
 		}
 	}
@@ -76,12 +79,25 @@ func (p *player) writeMessages(ctx context.Context) {
 				return
 			}
 
-			fmt.Fprintf(w, "%d tick: %v", n, t)
+			fmt.Fprintf(w, "tick %d: %v", n, t)
 			if err := w.Close(); err != nil {
 				p.Error("close frame error: %v", err)
 				return
 			}
-			p.Info("wrote a tick")
+		case msg := <-p.outbox:
+			p.Info("writing message from outbox: %s", msg)
+			w, err := p.conn.NextWriter(websocket.TextMessage)
+			if err != nil {
+				p.Error("error getting writer: %v", err)
+				return
+			}
+
+			w.Write([]byte(msg))
+			if err := w.Close(); err != nil {
+				p.Error("close frame error: %v", err)
+				return
+			}
+
 		case <-ctx.Done():
 			return
 		}

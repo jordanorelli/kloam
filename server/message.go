@@ -1,6 +1,6 @@
 package main
 
 type message struct {
-	from int
+	from *player
 	text string
 }

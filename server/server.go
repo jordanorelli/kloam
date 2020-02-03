@@ -16,6 +16,7 @@ type server struct {
 	players map[int]*player
 	join    chan player
 	inbox   chan message
+	souls   map[string]soul
 }
 
 func (s *server) init() {
@@ -42,6 +43,7 @@ func (s *server) play(w http.ResponseWriter, r *http.Request) {
 	s.join <- player{
 		conn:   conn,
 		server: s,
+		outbox: make(chan string, 8),
 	}
 }
 
@@ -60,6 +62,7 @@ func (s *server) step(pc int) {
 		p.id = pc
 		p.Log = s.Child("players").Child(strconv.Itoa(p.id))
 		go p.run()
+		s.players[p.id] = &p
 	case m := <-s.inbox:
 		s.Info("received message: %v", m)
 		var req request
@@ -69,5 +72,6 @@ func (s *server) step(pc int) {
 		}
 		cmd := req.parse(m.text)
 		s.Info("cmd: %#v", cmd)
+		cmd.exec(s, m.from)
 	}
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 )
 
 type request struct {
@@ -31,7 +32,7 @@ type vector3 struct {
 }
 
 type command interface {
-	exec(*server)
+	exec(*server, *player)
 }
 
 type collectSoul struct {
@@ -39,7 +40,7 @@ type collectSoul struct {
 	Position   vector3 `json:"position"`
 }
 
-func (c *collectSoul) exec(s *server) {
+func (c *collectSoul) exec(s *server, from *player) {
 }
 
 type login struct {
@@ -47,12 +48,35 @@ type login struct {
 	Password string `json:"password"`
 }
 
-func (l *login) exec(s *server) {
+func (l *login) exec(s *server, from *player) {
+	from.username = l.Username
 }
 
 type death struct {
 	Position vector3 `json:"position"`
 }
 
-func (d *death) exec(s *server) {
+func (d *death) exec(s *server, from *player) {
+	s.Info("executing a death: %#v", d)
+	_soul := soul{
+		PlayerName: from.username,
+		Position:   d.Position,
+	}
+	s.souls[from.username] = _soul
+
+	b, err := json.Marshal(_soul)
+	if err != nil {
+		s.Error("unable to serialize soul: %v", err)
+		return
+	}
+
+	msg := fmt.Sprintf("spawn-soul %s", string(b))
+
+	for _, player := range s.players {
+		select {
+		case player.outbox <- msg:
+		default:
+			s.Error("can't write to player %s's outbox", player.username)
+		}
+	}
 }

@@ -17,6 +17,7 @@ func main() {
 		Log:   log,
 		join:  make(chan player),
 		inbox: make(chan message),
+		souls: make(map[string]soul),
 	}
 	s.init()
 	go s.run()

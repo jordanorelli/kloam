@@ -17,15 +17,22 @@ public class Networking : ScriptableObject {
     public int port;
 
     private ClientWebSocket sock;
-    private Task connectTask;
     private Task writeTask;
+    private Task<WebSocketReceiveResult> readTask;
+    private ArraySegment<byte> readBuffer;
     private int seq;
 
-    public void Connect() {
-        if (isConnected()) {
-            return;
+    async public void Connect() {
+        if (sock != null) {
+            if (sock.State == WebSocketState.Open) {
+                return;
+            }
+            sock = null;
         }
+
+        readBuffer = new ArraySegment<byte>(new byte[32000]);
         Application.quitting += autoDisconnect;
+
         sock = new ClientWebSocket();
         UriBuilder b = new UriBuilder();
         b.Scheme = "ws";
@@ -33,10 +40,8 @@ public class Networking : ScriptableObject {
         b.Port = port;
         b.Path = path;
         Debug.LogFormat("Connecting to: {0}", b.Uri);
-        connectTask = sock.ConnectAsync(b.Uri, CancellationToken.None);
-        connectTask.ContinueWith((x) => {
-            Debug.LogFormat("Finished connection task with status: {0}", sock.State);
-        });
+        await sock.ConnectAsync(b.Uri, CancellationToken.None);
+        Debug.LogFormat("Finished connection task with status: {0}", sock.State);
     }
 
     public void SendCollectSoul(string playerName, Vector3 position) {
@@ -74,8 +79,24 @@ public class Networking : ScriptableObject {
         sock.SendAsync(buf, WebSocketMessageType.Text, true, CancellationToken.None);
     }
 
+    async public void CheckForMessages() {
+        if (readTask != null) {
+            return;
+        }
+        Debug.Log("checking for messages");
+        readTask = sock.ReceiveAsync(readBuffer, CancellationToken.None);
+        WebSocketReceiveResult result = await readTask;
+        readTask = null;
+        Debug.LogFormat("received message: {0}", result);
+        Debug.LogFormat("Readbuffer count: {0} offset: {1}", readBuffer.Count, readBuffer.Offset);
+        string msg = Encoding.UTF8.GetString(readBuffer.Array, 0, result.Count);
+        string[] parts = msg.Split(new char[]{' '}, 2);
+        Debug.LogFormat("first: {0} second: {1}", parts[0], parts[1]);
+    }
+
     private void autoDisconnect() {
         if (isConnected()) {
+            Debug.Log("disconnecting websocket via autoDisconnect");
             Task task = sock.CloseAsync(WebSocketCloseStatus.NormalClosure, "closed", CancellationToken.None);
             task.Wait();
         }

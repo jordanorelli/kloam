@@ -30,6 +30,8 @@ public class PlayerController : MonoBehaviour {
     }
 
     void Update() {
+        networking.CheckForMessages();
+
         if (moveController.collisions.above || moveController.collisions.below) {
             velocity.y = 0;
         }

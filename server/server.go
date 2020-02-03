@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -14,6 +15,7 @@ type server struct {
 	router  *mux.Router
 	players map[int]*player
 	join    chan player
+	inbox   chan message
 }
 
 func (s *server) init() {
@@ -38,7 +40,8 @@ func (s *server) play(w http.ResponseWriter, r *http.Request) {
 
 	s.Info("client connected: %v", conn.RemoteAddr())
 	s.join <- player{
-		conn: conn,
+		conn:   conn,
+		server: s,
 	}
 }
 
@@ -57,5 +60,14 @@ func (s *server) step(pc int) {
 		p.id = pc
 		p.Log = s.Child("players").Child(strconv.Itoa(p.id))
 		go p.run()
+	case m := <-s.inbox:
+		s.Info("received message: %v", m)
+		var req request
+		if err := json.Unmarshal([]byte(m.text), &req); err != nil {
+			s.Error("dunno how to read this message: %v", m.text)
+			return
+		}
+		cmd := req.parse(m.text)
+		s.Info("cmd: %#v", cmd)
 	}
 }

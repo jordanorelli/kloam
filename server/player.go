@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"time"
 
@@ -11,15 +12,18 @@ import (
 
 type player struct {
 	*blammo.Log
-	conn *websocket.Conn
-	id   int
+	conn   *websocket.Conn
+	server *server
+	id     int
 }
 
 func (p *player) run() {
-	ctx, cancel := context.WithCancel(context.Background())
-	p.readMessages(cancel)
-	go p.writeMessages(ctx)
+	p.Info("starting run cycle")
+	defer p.Info("run cycle done")
 
+	ctx, cancel := context.WithCancel(context.Background())
+	go p.writeMessages(ctx)
+	p.readMessages(cancel)
 	p.conn.Close()
 }
 
@@ -47,22 +51,37 @@ func (p *player) readMessages(cancel func()) {
 		} else {
 			p.Child("rcv").Info(string(b))
 		}
+		p.server.inbox <- message{
+			from: p.id,
+			text: string(b),
+		}
 	}
 }
 
 func (p *player) writeMessages(ctx context.Context) {
+	p.Info("writeMessages loop start")
+	defer p.Info("writeMessage loop end")
+
 	ticker := time.NewTicker(1 * time.Second)
-	defer ticker.Stop()
+	n := 0
 
 	for {
 		select {
-		case <-ticker.C:
+		case t := <-ticker.C:
+			n++
+			p.Info("trying to write a tick")
 			w, err := p.conn.NextWriter(websocket.TextMessage)
 			if err != nil {
-
+				p.Error("error getting writer: %v", err)
+				return
 			}
-			w.Write([]byte("tick"))
-			w.Close()
+
+			fmt.Fprintf(w, "%d tick: %v", n, t)
+			if err := w.Close(); err != nil {
+				p.Error("close frame error: %v", err)
+				return
+			}
+			p.Info("wrote a tick")
 		case <-ctx.Done():
 			return
 		}

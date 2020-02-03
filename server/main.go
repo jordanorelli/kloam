@@ -14,8 +14,9 @@ func main() {
 	log := blammo.NewLog("kloam", blammo.DebugWriter(stdout), blammo.InfoWriter(stdout), blammo.ErrorWriter(stderr))
 
 	s := server{
-		Log:  log,
-		join: make(chan player),
+		Log:   log,
+		join:  make(chan player),
+		inbox: make(chan message),
 	}
 	s.init()
 	go s.run()

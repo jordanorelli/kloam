@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -15,6 +16,7 @@ type server struct {
 	router  *mux.Router
 	players map[int]*player
 	join    chan player
+	leave   chan *player
 	inbox   chan message
 	souls   map[string]soul
 }
@@ -63,6 +65,17 @@ func (s *server) step(pc int) {
 		p.Log = s.Child("players").Child(strconv.Itoa(p.id))
 		go p.run()
 		s.players[p.id] = &p
+		for _, soul := range s.souls {
+			b, _ := json.Marshal(soul)
+			msg := fmt.Sprintf("spawn-soul %s", string(b))
+			select {
+			case p.outbox <- msg:
+			default:
+			}
+		}
+	case p := <-s.leave:
+		delete(s.players, p.id)
+
 	case m := <-s.inbox:
 		s.Info("received message: %v", m)
 		var req request

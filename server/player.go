@@ -26,6 +26,7 @@ func (p *player) run() {
 	ctx, cancel := context.WithCancel(context.Background())
 	go p.writeMessages(ctx)
 	p.readMessages(cancel)
+	p.server.leave <- p
 	p.outbox = nil
 	p.conn.Close()
 }
@@ -72,7 +73,6 @@ func (p *player) writeMessages(ctx context.Context) {
 		select {
 		case t := <-ticker.C:
 			n++
-			p.Info("trying to write a tick")
 			w, err := p.conn.NextWriter(websocket.TextMessage)
 			if err != nil {
 				p.Error("error getting writer: %v", err)

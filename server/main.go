@@ -16,6 +16,7 @@ func main() {
 	s := server{
 		Log:   log,
 		join:  make(chan player),
+		leave: make(chan *player),
 		inbox: make(chan message),
 		souls: make(map[string]soul),
 	}

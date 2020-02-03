@@ -41,6 +41,26 @@ type collectSoul struct {
 }
 
 func (c *collectSoul) exec(s *server, from *player) {
+	soul, ok := s.souls[c.PlayerName]
+	if !ok {
+		return
+	}
+	delete(s.souls, c.PlayerName)
+
+	b, err := json.Marshal(soul)
+	if err != nil {
+		s.Error("unable to serialize soul: %v", err)
+		return
+	}
+
+	msg := fmt.Sprintf("soul-collected %s", string(b))
+	for _, player := range s.players {
+		select {
+		case player.outbox <- msg:
+		default:
+			s.Error("can't write to player %s's outbox", player.username)
+		}
+	}
 }
 
 type login struct {

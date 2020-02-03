@@ -25,13 +25,9 @@ public class PlayerController : MonoBehaviour {
 
         gravity = -(2*jumpHeight)/Mathf.Pow(jumpDuration, 2f);
         jumpVelocity = Mathf.Abs(gravity) * jumpDuration;
-
-        networking.Connect();
     }
 
     void Update() {
-        networking.CheckForMessages();
-
         if (moveController.collisions.above || moveController.collisions.below) {
             velocity.y = 0;
         }

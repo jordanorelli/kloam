@@ -6,6 +6,7 @@ using UnityEngine.UI;
 
 public class MainMenu : MonoBehaviour
 {
+    public LoginInfo loginInfo;
     public Networking networking;
     public InputField usernameField;
     public InputField passwordField;
@@ -28,7 +29,9 @@ public class MainMenu : MonoBehaviour
         }
         usernameField.interactable = false;
         passwordField.interactable = false;
-        networking.SendLogin(username, password);
+        loginInfo.playerName = username;
+        loginInfo.password = password;
+        networking.SendLogin();
         SceneManager.LoadScene("MainLevel");
     }
 }

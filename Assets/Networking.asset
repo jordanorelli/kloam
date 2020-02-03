@@ -17,3 +17,6 @@ MonoBehaviour:
   port: 9001
   soulPrefab: {fileID: 923676258187016684, guid: 80b838e4e488ed64b9ac358ee000f444,
     type: 3}
+  playerPrefab: {fileID: 6383496741192187632, guid: cd445451907d7274daea79c67e13a202,
+    type: 3}
+  loginInfo: {fileID: 11400000, guid: 3935bc2db09ef5f408342222f9490ded, type: 2}

@@ -16,6 +16,8 @@ public class Networking : ScriptableObject {
     public string path;
     public int port;
     public GameObject soulPrefab;
+    public GameObject playerPrefab;
+    public LoginInfo loginInfo;
 
     private ClientWebSocket sock;
     private Task writeTask;
@@ -24,6 +26,8 @@ public class Networking : ScriptableObject {
     private int seq;
 
     async public void Connect() {
+        readBuffer = new ArraySegment<byte>(new byte[32000]);
+
         if (sock != null) {
             if (sock.State == WebSocketState.Open) {
                 return;
@@ -31,7 +35,6 @@ public class Networking : ScriptableObject {
             sock = null;
         }
 
-        readBuffer = new ArraySegment<byte>(new byte[32000]);
         Application.quitting += autoDisconnect;
 
         sock = new ClientWebSocket();
@@ -68,13 +71,13 @@ public class Networking : ScriptableObject {
         sock.SendAsync(buf, WebSocketMessageType.Text, true, CancellationToken.None);
     }
 
-    public void SendLogin(string username, string password) {
+    public void SendLogin() {
         seq++;
         Login login;
         login.seq = seq;
         login.cmd = "login";
-        login.username = username;
-        login.password = password;
+        login.username = loginInfo.playerName;
+        login.password = loginInfo.password;
         string msg = JsonUtility.ToJson(login);
         ArraySegment<byte> buf = new ArraySegment<byte>(Encoding.UTF8.GetBytes(msg));
         sock.SendAsync(buf, WebSocketMessageType.Text, true, CancellationToken.None);
@@ -82,6 +85,9 @@ public class Networking : ScriptableObject {
 
     async public void CheckForMessages() {
         if (readTask != null) {
+            return;
+        }
+        if (sock == null) {
             return;
         }
         readTask = sock.ReceiveAsync(readBuffer, CancellationToken.None);
@@ -94,13 +100,37 @@ public class Networking : ScriptableObject {
             return;
         }
 
+        GameObject soul;
+
         switch (parts[0]) {
         case "spawn-soul":
             Debug.LogFormat("spawn a soul: {0}", parts[1]);
             SpawnSoul ss = JsonUtility.FromJson<SpawnSoul>(parts[1]);
-            GameObject soul = Instantiate(soulPrefab, ss.position, Quaternion.identity);
+            soul = Instantiate(soulPrefab, ss.position, Quaternion.identity);
+            soul.name = ss.playerName;
+
+            GameObject allSouls = GameObject.Find("Souls");
+            soul.transform.SetParent(allSouls.transform);
+
             SoulController sc = soul.GetComponent<SoulController>();
             sc.playerName = ss.playerName;
+            break;
+
+        case "soul-collected": 
+            Debug.LogFormat("a soul was collected: {0}", parts[1]);
+            CollectSoul collected = JsonUtility.FromJson<CollectSoul>(parts[1]);
+            soul = GameObject.Find("Souls/"+collected.playerName);
+            Destroy(soul);
+
+            if (collected.playerName == loginInfo.playerName) {
+                GameObject currentPlayer = GameObject.Find("Player");
+                if (currentPlayer == null) {
+                    GameObject player = Instantiate(playerPrefab, loginInfo.startPosition, Quaternion.identity);
+                    Camera cam = Camera.main;
+                    CameraController cc = cam.GetComponent<CameraController>();
+                    cc.player = player.transform;
+                }
+            }
             break;
 
         case "tick":

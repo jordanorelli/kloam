@@ -2350,6 +2350,36 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: f97b2236cb22fbc46a20b65f13071959, type: 3}
+--- !u!1 &427536309
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 427536310}
+  m_Layer: 0
+  m_Name: Souls
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &427536310
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 427536309}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 14
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &428174253 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7525036764583245661, guid: f97b2236cb22fbc46a20b65f13071959,
@@ -2952,6 +2982,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: af7a4f3a5c0c243498985148ee243e45, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  networking: {fileID: 11400000, guid: bb2274d4e981ac14fb9a2e043d04e95f, type: 2}
   player: {fileID: 1063375671}
 --- !u!4 &573540321 stripped
 Transform:

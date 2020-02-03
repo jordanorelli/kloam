@@ -55,15 +55,6 @@ public class PlayerController : MonoBehaviour {
 
     void OnDestroy() {
         Debug.Log("I'm dead");
-        // hud.gameObject.SetActive(true);
-        // HudController c = hud.gameObject.GetComponent<HudController>();
-        // if (c) {
-        //     c.SetDead(true);
-        // }
-        if (!quitting) {
-            GameObject soul = Instantiate(soulPrefab, transform.position + Vector3.up * 0.5f, transform.rotation);
-            soul.GetComponent<SoulController>().playerName = "fartface";
-        }
     }
 
     void OnCollisionEnter(Collision other) {
@@ -78,7 +69,7 @@ public class PlayerController : MonoBehaviour {
             Destroy(other.gameObject);
         }
         if (other.CompareTag("Fatal")) {
-            networking.SendDeath(transform.position);
+            networking.SendDeath(transform.position + Vector3.up * 0.5f);
             Destroy(gameObject);
         }
     }

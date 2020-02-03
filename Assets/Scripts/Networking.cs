@@ -15,6 +15,7 @@ public class Networking : ScriptableObject {
     public string host;
     public string path;
     public int port;
+    public GameObject soulPrefab;
 
     private ClientWebSocket sock;
     private Task writeTask;
@@ -83,22 +84,30 @@ public class Networking : ScriptableObject {
         if (readTask != null) {
             return;
         }
-        Debug.Log("checking for messages");
         readTask = sock.ReceiveAsync(readBuffer, CancellationToken.None);
         WebSocketReceiveResult result = await readTask;
         readTask = null;
-        Debug.LogFormat("received message: {0}", result);
-        Debug.LogFormat("Readbuffer count: {0} offset: {1}", readBuffer.Count, readBuffer.Offset);
         string msg = Encoding.UTF8.GetString(readBuffer.Array, 0, result.Count);
         string[] parts = msg.Split(new char[]{' '}, 2);
         if (parts.Length != 2) {
             Debug.LogFormat("dunno how to handle this msg: {0}", msg);
             return;
         }
-        Debug.LogFormat("first: {0} second: {1}", parts[0], parts[1]);
+
         switch (parts[0]) {
+        case "spawn-soul":
+            Debug.LogFormat("spawn a soul: {0}", parts[1]);
+            SpawnSoul ss = JsonUtility.FromJson<SpawnSoul>(parts[1]);
+            GameObject soul = Instantiate(soulPrefab, ss.position, Quaternion.identity);
+            SoulController sc = soul.GetComponent<SoulController>();
+            sc.playerName = ss.playerName;
+            break;
+
+        case "tick":
+            break;
 
         default:
+            Debug.LogFormat("also can't handle this one: {0} {1}", parts[0], parts[1]);
             break;
         }
     }
@@ -125,6 +134,11 @@ public class Networking : ScriptableObject {
     private struct Death {
         public int seq;
         public string cmd;
+        public Vector3 position;
+    }
+
+    private struct SpawnSoul {
+        public string playerName;
         public Vector3 position;
     }
 

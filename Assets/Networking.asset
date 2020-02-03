@@ -15,3 +15,5 @@ MonoBehaviour:
   host: cdm.jordanorelli.com
   path: kloam
   port: 9001
+  soulPrefab: {fileID: 923676258187016684, guid: 80b838e4e488ed64b9ac358ee000f444,
+    type: 3}

@@ -32,9 +32,9 @@ public class MoveController : MonoBehaviour
         collisions.Reset();
         collisions.velocityOld = velocity;
 
-        // if (velocity.y < 0) {
-        //     DescendSlope(ref velocity);
-        // }
+        if (velocity.y < 0) {
+            DescendSlope(ref velocity);
+        }
         if (velocity.x != 0) {
             HorizontalCollisions(ref velocity);
         }
@@ -59,10 +59,10 @@ public class MoveController : MonoBehaviour
             }
             float slopeAngle = Vector3.Angle(hit.normal, Vector3.up);
             if (i == 0 && slopeAngle <= maxClimbAngle) {
-                // if (collisions.descendingSlope) {
-                //     collisions.descendingSlope = false;
-                //     velocity = collisions.velocityOld;
-                // }
+                if (collisions.descendingSlope) {
+                    collisions.descendingSlope = false;
+                    velocity = collisions.velocityOld;
+                }
 
                 float distanceToSlopeStart = 0f;
                 if (slopeAngle!= collisions.slopeAngleOld) {
@@ -70,7 +70,10 @@ public class MoveController : MonoBehaviour
                     velocity.x -= distanceToSlopeStart * directionX;
                 }
                 ClimbSlope(ref velocity, slopeAngle);
-                velocity.x += distanceToSlopeStart * directionX;
+                // I do not remember why he put this back in, but this line
+                // causes my character to go through the floor when a slope
+                // meets another slope.
+                // velocity.x += distanceToSlopeStart * directionX;
                 Debug.DrawRay(rayOrigin + velocity, Vector3.right * directionX * rayLength, Color.magenta);
             }
 
@@ -123,6 +126,7 @@ public class MoveController : MonoBehaviour
             }
         }
 
+        // checks for a change in slope while climbing a slope
         if (collisions.climbingSlope) {
             float directionX = Mathf.Sign(velocity.x);
             rayLength = Mathf.Abs(velocity.x) + skinWidth;
@@ -152,49 +156,32 @@ public class MoveController : MonoBehaviour
     }
 
     private void DescendSlope(ref Vector3 velocity) {
-        bool movingRight = velocity.x > 0;
-        Vector3 rayOrigin;
-        if (movingRight) {
-            rayOrigin = raycastOrigins.bottomLeft;
-        } else {
-            rayOrigin = raycastOrigins.bottomRight;
-        }
-        Debug.DrawRay(rayOrigin + velocity, Vector3.down * Mathf.Abs(velocity.y), Color.magenta);
-
+        float directionX = Mathf.Sign(velocity.x);
+        // cast a ray downwards from the trailing corner of the collider
+        Vector3 rayOrigin = (directionX == -1) ? raycastOrigins.bottomRight : raycastOrigins.bottomLeft;
         RaycastHit hit;
-        if (!Physics.Raycast(rayOrigin, Vector3.down, out hit, Mathf.Abs(velocity.y)+skinWidth, collisionMask)) {
+        if (!Physics.Raycast(rayOrigin, Vector3.down, out hit, Mathf.Infinity, collisionMask)) {
             return;
         }
+
         float slopeAngle = Vector3.Angle(hit.normal, Vector3.up);
         if (slopeAngle == 0 || slopeAngle > maxDescendAngle) {
             return;
         }
-        if (Mathf.Sign(hit.normal.x) != Mathf.Sign(velocity.x)) {
+        
+        if (Mathf.Sign(hit.normal.x) != directionX) {
             return;
         }
-        Debug.LogFormat("Descending slope at angle: {0}", slopeAngle);
 
-        // float directionX = Mathf.Sign(velocity.x);
-        // Vector3 rayOrigin = (directionX == -1) ? raycastOrigins.bottomRight : raycastOrigins.bottomLeft;
-        // RaycastHit hit;
-        // Debug.DrawRay(rayOrigin+velocity, Vector3.down * Mathf.Infinity, Color.green);
-        // if (Physics.Raycast(rayOrigin, Vector3.down, out hit, Mathf.Infinity, collisionMask)) {
-        //     float slopeAngle = Vector3.Angle(hit.normal, Vector3.up);
-        //     if (slopeAngle != 0 && slopeAngle <= maxDescendAngle) {
-        //         if (Mathf.Sign(hit.normal.x) == directionX) {
-        //             if (hit.distance - skinWidth <= Mathf.Tan(slopeAngle * Mathf.Deg2Rad) * Mathf.Abs(velocity.x)) {
-        //                 Debug.LogFormat("Descending slope with angle {0} at hit distance {1}", slopeAngle, hit.distance);
-        //                 float moveDistance = Mathf.Abs(velocity.x);
-        //                 float descendVelocityY = Mathf.Sin(slopeAngle * Mathf.Deg2Rad) * moveDistance;
-        //                 velocity.x = Mathf.Cos(slopeAngle * Mathf.Deg2Rad) * moveDistance * Mathf.Sign(velocity.x);
-        //                 velocity.y -= descendVelocityY;
-        //                 collisions.slopeAngle = slopeAngle;
-        //                 collisions.descendingSlope = true;
-        //                 collisions.below = true;
-        //             }
-        //         }
-        //     }
-        // }
+        if (hit.distance - skinWidth <= Mathf.Tan(slopeAngle * Mathf.Deg2Rad) * Mathf.Abs(velocity.x)) {
+            float moveDistance = Mathf.Abs(velocity.x);
+            float descendY = Mathf.Sin(slopeAngle * Mathf.Deg2Rad) * moveDistance;
+            velocity.x = Mathf.Cos(slopeAngle * Mathf.Deg2Rad) * moveDistance * Mathf.Sign(velocity.x);
+            velocity.y -= descendY;
+            collisions.below = true; // grounded
+            collisions.slopeAngle = slopeAngle;
+            collisions.descendingSlope = true;
+        }
     }
 
     void UpdateRaycastOrigins() {

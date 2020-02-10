@@ -7,7 +7,7 @@ public class PlayerController : MonoBehaviour {
     public float jumpHeight = 4f;
     public float jumpDuration = 0.4f;
     public float moveSpeed = 6f;
-    public float accelerationTimeAirborne = 0.2f;
+    public float accelerationTimeAirborne = 0.1f;
     public float accelerationTimeGrounded = 0.05f;
     public Canvas hud;
     public GameObject soulPrefab;

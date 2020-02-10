@@ -59,6 +59,9 @@ public class MoveController : MonoBehaviour
             }
             float slopeAngle = Vector3.Angle(hit.normal, Vector3.up);
             if (i == 0 && slopeAngle <= maxClimbAngle) {
+                // if uh we're descending a slope and encounter another slope
+                // actually no we're not descending a slope we're climbing the
+                // other one.
                 if (collisions.descendingSlope) {
                     collisions.descendingSlope = false;
                     velocity = collisions.velocityOld;

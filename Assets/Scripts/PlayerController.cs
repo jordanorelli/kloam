@@ -4,7 +4,7 @@ using UnityEngine;
 
 [RequireComponent(typeof(MoveController))]
 public class PlayerController : MonoBehaviour {
-    public float jumpHeight = 4f;
+    public float jumpHeight = 5f;
     public float jumpDuration = 0.4f;
     public float moveSpeed = 6f;
     public float accelerationTimeAirborne = 0.1f;

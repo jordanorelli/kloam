@@ -16,7 +16,7 @@ public class CameraController : MonoBehaviour {
         networking.CheckForMessages();
 
         if (player) {
-            transform.position = new Vector3(player.position.x-1, player.position.y+4, player.position.z-8);
+            transform.position = new Vector3(player.position.x-2, player.position.y+2, player.position.z-10);
             transform.LookAt(player);
         }
     }

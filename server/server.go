@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/jordanorelli/blammo"
+	"github.com/jordanorelli/kloam/db"
 )
 
 type server struct {
@@ -19,6 +20,7 @@ type server struct {
 	leave   chan *player
 	inbox   chan message
 	souls   map[string]soul
+	db      *db.SQLite
 }
 
 func (s *server) init() {

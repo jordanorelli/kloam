@@ -69,7 +69,11 @@ type login struct {
 }
 
 func (l *login) exec(s *server, from *player) {
-	from.username = l.Username
+	if err := s.db.CheckPassword(l.Username, l.Password); err != nil {
+		from.username = l.Username
+	} else {
+
+	}
 }
 
 type death struct {

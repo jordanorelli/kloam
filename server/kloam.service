@@ -1,0 +1,20 @@
+[Unit]
+Description=Kloam Multiplayer Server
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/jorelli/kloam/server
+ExecStart=/home/jorelli/kloam/server/kloam server
+KillMode=process
+Restart=always
+KillSignal=SIGINT
+KillMode=process
+SendSIGKILL=no
+LimitNOFILE=64000
+User=jorelli
+Group=jorelli
+
+[Install]
+WantedBy=multi-user.target
+Alias=kloam

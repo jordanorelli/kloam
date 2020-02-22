@@ -78,4 +78,21 @@ func (db *SQLite) CheckPassword(name, pass string) error {
 	return nil
 }
 
+func (db *SQLite) SetPassword(name, pass, salt string) error {
+	combined := []byte(pass + salt)
+	hashBytes, err := bcrypt.GenerateFromPassword(combined, 13)
+	if err != nil {
+		return fmt.Errorf("unable to generate password hash: %v", err)
+	}
+	hash := string(hashBytes)
+	if _, err := db.db.Exec(`
+	update users
+	set phash = ?, psalt = ?
+	where name = ?;
+	`, hash, salt, name); err != nil {
+		return fmt.Errorf("unable to update user: %v", err)
+	}
+	return nil
+}
+
 func (db *SQLite) Close() error { return db.db.Close() }

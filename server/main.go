@@ -78,6 +78,20 @@ func runUserCreate(cmd *cobra.Command, args []string) {
 	fmt.Printf("created:\n\tuser:\t%s\n\tpass:\t%s\n", user, pass)
 }
 
+func runUserCheckPassword(cmd *cobra.Command, args []string) {
+	conn, err := db.OpenSQLite(cmd.Flag("db").Value.String())
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "unable to open sqlite database: %v\n", err)
+	}
+	defer conn.Close()
+
+	user := args[0]
+	pass := args[1]
+	if err := conn.CheckPassword(user, pass); err != nil {
+		fmt.Fprintf(os.Stderr, "failed password check: %v\n", err)
+	}
+}
+
 func main() {
 	cmd := &cobra.Command{
 		Use: "kloam",
@@ -105,6 +119,14 @@ func main() {
 		Run:   runUserCreate,
 	}
 	user.AddCommand(userCreate)
+
+	userCheckPassword := &cobra.Command{
+		Use:   "check-password",
+		Short: "checks a users password",
+		Args:  cobra.ExactArgs(2),
+		Run:   runUserCheckPassword,
+	}
+	user.AddCommand(userCheckPassword)
 
 	cmd.Execute()
 }

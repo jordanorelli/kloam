@@ -49,6 +49,32 @@ func (db *SQLite) CreateUser(name, pass, salt string) error {
 }
 
 func (db *SQLite) CheckPassword(name, pass string) error {
+	rows, err := db.db.Query(`
+	select phash, psalt from users where name = ?;
+	`, name)
+	if err != nil {
+		return fmt.Errorf("failed to fetch row for user %s: %v", name, err)
+	}
+	defer rows.Close()
+
+	scannedRows := 0
+	for rows.Next() {
+		var (
+			dbhash string
+			dbsalt string
+		)
+		if err := rows.Scan(&dbhash, &dbsalt); err != nil {
+			return fmt.Errorf("failed to scan row: %v", err)
+		}
+		scannedRows++
+		if err := bcrypt.CompareHashAndPassword([]byte(dbhash), []byte(pass+dbsalt)); err != nil {
+			return fmt.Errorf("failed hash match: %v", err)
+		}
+	}
+	if scannedRows == 0 {
+		return fmt.Errorf("no such user")
+	}
+
 	return nil
 }
 

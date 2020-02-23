@@ -68,12 +68,23 @@ type login struct {
 	Password string `json:"password"`
 }
 
+type loginResult struct {
+	Passed bool   `json:"passed"`
+	Error  string `json:"error,omitempty"`
+}
+
 func (l *login) exec(s *server, from *player) {
+	res := loginResult{}
 	if err := s.db.CheckPassword(l.Username, l.Password); err != nil {
-		from.username = l.Username
+		res.Error = err.Error()
 	} else {
+		res.Passed = true
+		from.username = l.Username
 
 	}
+	b, _ := json.Marshal(res)
+	msg := fmt.Sprintf("login-result %s", string(b))
+	from.outbox <- msg
 }
 
 type death struct {

@@ -10,15 +10,29 @@ public class MainMenu : MonoBehaviour
     public Networking networking;
     public InputField usernameField;
     public InputField passwordField;
+    public Text errorText;
 
     // Start is called before the first frame update
     void Start() {
+        loginInfo.isLoggedIn = false;
+        loginInfo.sentLogin = false;
         networking.Connect();
     }
 
     // Update is called once per frame
     void Update() {
-        
+        networking.CheckForMessages();
+        usernameField.interactable = !loginInfo.sentLogin;
+        passwordField.interactable = !loginInfo.sentLogin;
+        if (loginInfo.loginError == "") {
+            errorText.gameObject.SetActive(false);
+        } else {
+            errorText.text = loginInfo.loginError;
+            errorText.gameObject.SetActive(true);
+        }
+        if (loginInfo.isLoggedIn) {
+            SceneManager.LoadScene("MainLevel");
+        }
     }
 
     public void Login() {
@@ -32,6 +46,5 @@ public class MainMenu : MonoBehaviour
         loginInfo.playerName = username;
         loginInfo.password = password;
         networking.SendLogin();
-        SceneManager.LoadScene("MainLevel");
     }
 }

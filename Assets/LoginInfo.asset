@@ -12,6 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fb331b678c613734fa2ba6013e9cd499, type: 3}
   m_Name: LoginInfo
   m_EditorClassIdentifier: 
-  playerName: DefaultPlayerName
-  password: defaultPassword
+  playerName: jordan
+  password: fartsock
   startPosition: {x: 0, y: 10, z: 0}
+  sentLogin: 0
+  isLoggedIn: 1
+  loginFailed: 0

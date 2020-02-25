@@ -78,6 +78,8 @@ public class Networking : ScriptableObject {
         login.cmd = "login";
         login.username = loginInfo.playerName;
         login.password = loginInfo.password;
+        loginInfo.sentLogin = true;
+        loginInfo.loginError = "";
         string msg = JsonUtility.ToJson(login);
         ArraySegment<byte> buf = new ArraySegment<byte>(Encoding.UTF8.GetBytes(msg));
         sock.SendAsync(buf, WebSocketMessageType.Text, true, CancellationToken.None);
@@ -133,6 +135,18 @@ public class Networking : ScriptableObject {
             }
             break;
 
+        case "login-result":
+            Debug.LogFormat("received login result: {0}", parts[1]);
+            loginInfo.sentLogin = false;
+            LoginResult login = JsonUtility.FromJson<LoginResult>(parts[1]);
+            if (login.passed) {
+                loginInfo.isLoggedIn = true;
+            } else {
+                loginInfo.loginError = login.error;
+                Debug.LogErrorFormat("failed login: {0}", login.error);
+            }
+            break;
+
         case "tick":
             break;
 
@@ -177,5 +191,10 @@ public class Networking : ScriptableObject {
         public string cmd;
         public string username;
         public string password;
+    }
+
+    private struct LoginResult {
+        public bool passed;
+        public string error;
     }
 }

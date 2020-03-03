@@ -45,6 +45,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9233be87a331d7c40ac203239227bacc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  range: 20
   collisionMask:
     serializedVersion: 2
     m_Bits: 3072
@@ -126,7 +127,7 @@ PrefabInstance:
     - target: {fileID: 2300000, guid: 9aced54bab99cb6499f16b696076404a, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: c59c38011cbba7149b7be122430b0621, type: 2}
+      objectReference: {fileID: 2100000, guid: 55fc00ddb778fcd4daf7db1412df7e53, type: 2}
     - target: {fileID: 2300000, guid: 9aced54bab99cb6499f16b696076404a, type: 3}
       propertyPath: m_Enabled
       value: 1

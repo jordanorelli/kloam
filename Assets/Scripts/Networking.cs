@@ -102,49 +102,20 @@ public class Networking : ScriptableObject {
             return;
         }
 
-        GameObject soul;
-
         switch (parts[0]) {
         case "spawn-soul":
-            Debug.LogFormat("spawn a soul: {0}", parts[1]);
-            SpawnSoul ss = JsonUtility.FromJson<SpawnSoul>(parts[1]);
-            soul = Instantiate(soulPrefab, ss.position, Quaternion.identity);
-            soul.name = ss.playerName;
-
-            GameObject allSouls = GameObject.Find("Souls");
-            soul.transform.SetParent(allSouls.transform);
-
-            SoulController sc = soul.GetComponent<SoulController>();
-            sc.playerName = ss.playerName;
+            SpawnSoul spawned = JsonUtility.FromJson<SpawnSoul>(parts[1]);
+            onSpawnSoul(spawned);
             break;
 
         case "soul-collected": 
-            Debug.LogFormat("a soul was collected: {0}", parts[1]);
             CollectSoul collected = JsonUtility.FromJson<CollectSoul>(parts[1]);
-            soul = GameObject.Find("Souls/"+collected.playerName);
-            Destroy(soul);
-
-            if (collected.playerName == loginInfo.playerName) {
-                GameObject currentPlayer = GameObject.Find("Player");
-                if (currentPlayer == null) {
-                    GameObject player = Instantiate(playerPrefab, loginInfo.startPosition, Quaternion.identity);
-                    Camera cam = Camera.main;
-                    CameraController cc = cam.GetComponent<CameraController>();
-                    cc.player = player.transform;
-                }
-            }
+            onSoulCollected(collected);
             break;
 
         case "login-result":
-            Debug.LogFormat("received login result: {0}", parts[1]);
-            loginInfo.sentLogin = false;
             LoginResult login = JsonUtility.FromJson<LoginResult>(parts[1]);
-            if (login.passed) {
-                loginInfo.isLoggedIn = true;
-            } else {
-                loginInfo.loginError = login.error;
-                Debug.LogErrorFormat("failed login: {0}", login.error);
-            }
+            onLoginResult(login);
             break;
 
         case "tick":
@@ -153,6 +124,45 @@ public class Networking : ScriptableObject {
         default:
             Debug.LogFormat("also can't handle this one: {0} {1}", parts[0], parts[1]);
             break;
+        }
+    }
+
+    private void onSpawnSoul(SpawnSoul spawn) {
+        Debug.LogFormat("spawn a soul: {0}", spawn);
+        GameObject soul = Instantiate(soulPrefab, spawn.position, Quaternion.identity);
+        soul.name = spawn.playerName;
+
+        GameObject allSouls = GameObject.Find("Souls");
+        soul.transform.SetParent(allSouls.transform);
+
+        SoulController sc = soul.GetComponent<SoulController>();
+        sc.playerName = spawn.playerName;
+    }
+
+    private void onSoulCollected(CollectSoul collected) {
+        Debug.LogFormat("a soul was collected: {0}", collected);
+        GameObject soul = GameObject.Find("Souls/"+collected.playerName);
+        Destroy(soul);
+
+        if (collected.playerName == loginInfo.playerName) {
+            GameObject currentPlayer = GameObject.Find("Player");
+            if (currentPlayer == null) {
+                GameObject player = Instantiate(playerPrefab, loginInfo.startPosition, Quaternion.identity);
+                Camera cam = Camera.main;
+                CameraController cc = cam.GetComponent<CameraController>();
+                cc.player = player.transform;
+            }
+        }
+    }
+
+    private void onLoginResult(LoginResult result) {
+        Debug.LogFormat("received login result: {0}", result);
+        loginInfo.sentLogin = false;
+        if (result.passed) {
+            loginInfo.isLoggedIn = true;
+        } else {
+            loginInfo.loginError = result.error;
+            Debug.LogErrorFormat("failed login: {0}", result.error);
         }
     }
 

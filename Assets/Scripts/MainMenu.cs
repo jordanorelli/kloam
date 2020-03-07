@@ -31,7 +31,7 @@ public class MainMenu : MonoBehaviour
             errorText.gameObject.SetActive(true);
         }
         if (loginInfo.isLoggedIn) {
-            SceneManager.LoadScene("MainLevel");
+            SceneManager.LoadScene("LevelTwo");
         }
     }
 

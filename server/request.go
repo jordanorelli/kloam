@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 )
 
 type request struct {
@@ -85,6 +86,26 @@ func (l *login) exec(s *server, from *player) {
 	b, _ := json.Marshal(res)
 	msg := fmt.Sprintf("login-result %s", string(b))
 	from.outbox <- msg
+
+	messages := make([]string, 0, len(s.souls))
+
+	for _, soul := range s.souls {
+		b, _ := json.Marshal(soul)
+		msg := fmt.Sprintf("spawn-soul %s", string(b))
+		messages = append(messages, msg)
+	}
+
+	go func() {
+		time.Sleep(1 * time.Second)
+
+		for _, msg := range messages {
+			select {
+			case from.outbox <- msg:
+			default:
+			}
+		}
+	}()
+
 }
 
 type death struct {

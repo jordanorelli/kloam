@@ -29,15 +29,23 @@ func OpenSQLite(path string) (*SQLite, error) {
 		fmt.Fprintf(os.Stderr, "failed to create players table: %v\n", err)
 	}
 
-	// if _, err := db.Exec(`
-	// create table if not exists corpses (
-	// 	id integer primary key autoincrement,
-	// 	player integer fo
+	if _, err := db.Exec(`
+	create table if not exists deaths (
+		id integer primary key autoincrement,
+		player integer,
+		died_at datetime default current_timestamp,
+		x real,
+		y real,
+		z real,
+		foreign key (player) references players(id)
+	);`); err != nil {
+		fmt.Fprintf(os.Stderr, "failed to create deaths table: %v\n", err)
+	}
 
 	return &SQLite{db: db}, nil
 }
 
-func (db *SQLite) CreateUser(name, pass, salt string) error {
+func (db *SQLite) CreatePlayer(name, pass, salt string) error {
 	combined := []byte(pass + salt)
 	hashBytes, err := bcrypt.GenerateFromPassword(combined, 13)
 	if err != nil {

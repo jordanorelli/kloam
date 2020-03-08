@@ -1,5 +1,5 @@
 package db
 
 type DB struct {
-	Users
+	Players
 }

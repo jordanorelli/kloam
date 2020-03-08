@@ -54,14 +54,14 @@ func runServer(cmd *cobra.Command, args []string) {
 	http.Serve(lis, s.handler())
 }
 
-func runUserCreate(cmd *cobra.Command, args []string) {
+func runPlayerCreate(cmd *cobra.Command, args []string) {
 	conn, err := db.OpenSQLite(cmd.Flag("db").Value.String())
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "unable to open sqlite database: %v\n", err)
 	}
 	defer conn.Close()
 
-	user := args[0]
+	player := args[0]
 	var pass string
 	if len(args) > 1 {
 		pass = args[1]
@@ -70,39 +70,39 @@ func runUserCreate(cmd *cobra.Command, args []string) {
 	}
 	salt := cryptostring(12)
 
-	if err := conn.CreateUser(user, pass, salt); err != nil {
-		fmt.Fprintf(os.Stderr, "failed to create user: %v\n", err)
+	if err := conn.CreatePlayer(player, pass, salt); err != nil {
+		fmt.Fprintf(os.Stderr, "failed to create player: %v\n", err)
 		return
 	}
 
-	fmt.Printf("created:\n\tuser:\t%s\n\tpass:\t%s\n", user, pass)
+	fmt.Printf("created:\n\tplayer:\t%s\n\tpass:\t%s\n", player, pass)
 }
 
-func runUserCheckPassword(cmd *cobra.Command, args []string) {
+func runPlayerCheckPassword(cmd *cobra.Command, args []string) {
 	conn, err := db.OpenSQLite(cmd.Flag("db").Value.String())
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "unable to open sqlite database: %v\n", err)
 	}
 	defer conn.Close()
 
-	user := args[0]
+	player := args[0]
 	pass := args[1]
-	if err := conn.CheckPassword(user, pass); err != nil {
+	if err := conn.CheckPassword(player, pass); err != nil {
 		fmt.Fprintf(os.Stderr, "failed password check: %v\n", err)
 	}
 }
 
-func runUserSetPassword(cmd *cobra.Command, args []string) {
+func runPlayerSetPassword(cmd *cobra.Command, args []string) {
 	conn, err := db.OpenSQLite(cmd.Flag("db").Value.String())
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "unable to open sqlite database: %v\n", err)
 	}
 	defer conn.Close()
 
-	user := args[0]
+	player := args[0]
 	pass := args[1]
 	salt := cryptostring(12)
-	if err := conn.SetPassword(user, pass, salt); err != nil {
+	if err := conn.SetPassword(player, pass, salt); err != nil {
 		fmt.Fprintf(os.Stderr, "failed to set password: %v\n", err)
 	}
 }
@@ -121,35 +121,35 @@ func main() {
 	server.Flags().StringP("listen", "l", "0.0.0.0:9001", "ip:port to listen on")
 	cmd.AddCommand(server)
 
-	user := &cobra.Command{
-		Use:   "user",
-		Short: "user management stuff",
+	player := &cobra.Command{
+		Use:   "player",
+		Short: "player management stuff",
 	}
-	cmd.AddCommand(user)
+	cmd.AddCommand(player)
 
-	userCreate := &cobra.Command{
+	playerCreate := &cobra.Command{
 		Use:   "create",
-		Short: "create a user",
+		Short: "create a player",
 		Args:  cobra.RangeArgs(1, 2),
-		Run:   runUserCreate,
+		Run:   runPlayerCreate,
 	}
-	user.AddCommand(userCreate)
+	player.AddCommand(playerCreate)
 
-	userCheckPassword := &cobra.Command{
+	playerCheckPassword := &cobra.Command{
 		Use:   "check-password",
-		Short: "checks a user's password",
+		Short: "checks a player's password",
 		Args:  cobra.ExactArgs(2),
-		Run:   runUserCheckPassword,
+		Run:   runPlayerCheckPassword,
 	}
-	user.AddCommand(userCheckPassword)
+	player.AddCommand(playerCheckPassword)
 
-	userSetPassword := &cobra.Command{
+	playerSetPassword := &cobra.Command{
 		Use:   "set-password",
-		Short: "sets a user's password",
+		Short: "sets a player's password",
 		Args:  cobra.ExactArgs(2),
-		Run:   runUserSetPassword,
+		Run:   runPlayerSetPassword,
 	}
-	user.AddCommand(userSetPassword)
+	player.AddCommand(playerSetPassword)
 
 	cmd.Execute()
 }

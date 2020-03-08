@@ -20,13 +20,9 @@ public class Networking : ScriptableObject {
     public LoginInfo loginInfo;
 
     private ClientWebSocket sock;
-    private Task writeTask;
-    private Task<WebSocketReceiveResult> readTask;
-    private ArraySegment<byte> readBuffer;
     private int seq;
 
     async public void Connect() {
-        readBuffer = new ArraySegment<byte>(new byte[32000]);
 
         if (sock != null) {
             if (sock.State == WebSocketState.Open) {
@@ -46,6 +42,9 @@ public class Networking : ScriptableObject {
         Debug.LogFormat("Connecting to: {0}", b.Uri);
         await sock.ConnectAsync(b.Uri, CancellationToken.None);
         Debug.LogFormat("Finished connection task with status: {0}", sock.State);
+        if (loginInfo.playerName != "" && loginInfo.password != "") {
+            SendLogin();
+        }
         return;
     }
 
@@ -83,11 +82,13 @@ public class Networking : ScriptableObject {
         loginInfo.loginError = "";
         string msg = JsonUtility.ToJson(login);
         ArraySegment<byte> buf = new ArraySegment<byte>(Encoding.UTF8.GetBytes(msg));
+        Debug.LogFormat("sending login user: {0} pass: {1}", loginInfo.playerName, loginInfo.password);
         sock.SendAsync(buf, WebSocketMessageType.Text, true, CancellationToken.None);
     }
 
     public IEnumerator ReadMessages() {
-        Task<WebSocketReceiveResult> readTask = null; // = sock.ReceiveAsync(readBuffer, CancellationToken.None);
+        ArraySegment<byte> readBuffer = new ArraySegment<byte>(new byte[32000]);
+        Task<WebSocketReceiveResult> readTask = null;
 
         while (true) {
             if (!isConnected()) {
@@ -109,7 +110,9 @@ public class Networking : ScriptableObject {
                 continue;
 
             case TaskStatus.RanToCompletion:
-                parseMessage(readTask.Result);
+                WebSocketReceiveResult result = readTask.Result;
+                string msg = Encoding.UTF8.GetString(readBuffer.Array, 0, result.Count);
+                parseMessage(msg);
                 break;
 
             case TaskStatus.Canceled:
@@ -122,8 +125,7 @@ public class Networking : ScriptableObject {
         }
     }
 
-    private void parseMessage(WebSocketReceiveResult message) {
-        string msg = Encoding.UTF8.GetString(readBuffer.Array, 0, message.Count);
+    private void parseMessage(string msg) {
         string[] parts = msg.Split(new char[]{' '}, 2);
         if (parts.Length != 2) {
             Debug.LogFormat("dunno how to handle this msg: {0}", msg);
@@ -157,7 +159,11 @@ public class Networking : ScriptableObject {
     private void onSpawnSoul(SpawnSoul spawn) {
         Debug.LogFormat("spawn a soul: {0} at {1}", spawn.playerName, spawn.position);
         GameObject soul = Instantiate(soulPrefab, spawn.position, Quaternion.identity);
-        soul.name = spawn.playerName;
+        if (spawn.playerName != "") {
+            soul.name = spawn.playerName;
+        } else {
+            soul.name = "FUCK";
+        }
 
         GameObject allSouls = GameObject.Find("Souls");
         if (allSouls == null) {
@@ -172,7 +178,11 @@ public class Networking : ScriptableObject {
 
     private void onSoulCollected(CollectSoul collected) {
         Debug.LogFormat("a soul was collected: {0}", collected);
-        GameObject soul = GameObject.Find("Souls/"+collected.playerName);
+        string objName = "Souls/" + collected.playerName;
+        if (collected.playerName == "") {
+            objName = "Souls/FUCK";
+        }
+        GameObject soul = GameObject.Find(objName);
         Destroy(soul);
 
         if (collected.playerName == loginInfo.playerName) {

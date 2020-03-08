@@ -8,13 +8,14 @@ public class CameraController : MonoBehaviour {
 
     // Start is called before the first frame update
     void Start() {
-        networking.Connect();
+        if (!networking.isConnected()) {
+            networking.Connect();
+            StartCoroutine(networking.ReadMessages());
+        }
     }
 
     // Update is called once per frame
     void Update() {
-        networking.CheckForMessages();
-
         if (player) {
             transform.position = new Vector3(player.position.x-2, player.position.y+2, player.position.z-10);
             transform.LookAt(player.transform.position + player.up * 4f);

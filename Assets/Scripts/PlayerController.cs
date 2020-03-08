@@ -54,11 +54,11 @@ public class PlayerController : MonoBehaviour {
     }
 
     void OnCollisionEnter(Collision other) {
-        Debug.LogFormat("Player collided with {0}", other);
+        // Debug.LogFormat("Player collided with {0}", other);
     }
 
     void OnTriggerEnter(Collider other) {
-        Debug.LogFormat("Player triggered other: {0}", other);
+        // Debug.LogFormat("Player triggered other: {0}", other);
         if (other.CompareTag("Soul")) {
             SoulController soul = other.GetComponent<SoulController>();
             networking.SendCollectSoul(soul.playerName, other.transform.position);

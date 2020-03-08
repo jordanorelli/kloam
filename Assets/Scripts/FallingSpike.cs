@@ -38,7 +38,7 @@ public class FallingSpike : MonoBehaviour {
                 if (Physics.Raycast(raycastOrigins.left, Vector3.down, out hit, dx, collisionMask) ||
                     Physics.Raycast(raycastOrigins.right, Vector3.down, out hit, dx, collisionMask)) {
 
-                    Debug.LogFormat("the spike hit something: {0}", hit);
+                    // Debug.LogFormat("the spike hit something: {0}", hit);
                     dx = hit.distance;
                     doneFalling = true;
                     isFalling = false;
@@ -50,7 +50,7 @@ public class FallingSpike : MonoBehaviour {
     }
 
     void OnTriggerEnter(Collider other) {
-        Debug.LogFormat("Falling spike collided with other: {0}", other);
+        // Debug.LogFormat("Falling spike collided with other: {0}", other);
         PlayerController player = other.GetComponent<PlayerController>();
         if (player) {
             StartFalling();

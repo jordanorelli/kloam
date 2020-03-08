@@ -3,7 +3,12 @@ guid: 2e685bfc1554e0c419dadae2bc4803aa
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - loginInfo: {fileID: 11400000, guid: 3935bc2db09ef5f408342222f9490ded, type: 2}
+  - networking: {fileID: 11400000, guid: bb2274d4e981ac14fb9a2e043d04e95f, type: 2}
+  - usernameField: {instanceID: 0}
+  - passwordField: {instanceID: 0}
+  - errorText: {instanceID: 0}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

@@ -16,12 +16,14 @@ public class MainMenu : MonoBehaviour
     void Start() {
         loginInfo.isLoggedIn = false;
         loginInfo.sentLogin = false;
-        networking.Connect();
+        if (!networking.isConnected()) {
+            networking.Connect();
+            StartCoroutine(networking.ReadMessages());
+        }
     }
 
     // Update is called once per frame
     void Update() {
-        networking.CheckForMessages();
         usernameField.interactable = !loginInfo.sentLogin;
         passwordField.interactable = !loginInfo.sentLogin;
         if (loginInfo.loginError == "") {

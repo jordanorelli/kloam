@@ -3,7 +3,11 @@ guid: 7e392b35ca7959444b61a3e29a242f2b
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - hud: {instanceID: 0}
+  - soulPrefab: {fileID: 923676258187016684, guid: 80b838e4e488ed64b9ac358ee000f444,
+      type: 3}
+  - networking: {fileID: 11400000, guid: bb2274d4e981ac14fb9a2e043d04e95f, type: 2}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

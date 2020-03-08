@@ -46,6 +46,7 @@ public class Networking : ScriptableObject {
         Debug.LogFormat("Connecting to: {0}", b.Uri);
         await sock.ConnectAsync(b.Uri, CancellationToken.None);
         Debug.LogFormat("Finished connection task with status: {0}", sock.State);
+        return;
     }
 
     public void SendCollectSoul(string playerName, Vector3 position) {
@@ -85,23 +86,49 @@ public class Networking : ScriptableObject {
         sock.SendAsync(buf, WebSocketMessageType.Text, true, CancellationToken.None);
     }
 
-    async public void CheckForMessages() {
-        if (readTask != null) {
-            return;
+    public IEnumerator ReadMessages() {
+        Task<WebSocketReceiveResult> readTask = null; // = sock.ReceiveAsync(readBuffer, CancellationToken.None);
+
+        while (true) {
+            if (!isConnected()) {
+                yield return null;
+                continue;
+            }
+
+            if (readTask == null) {
+                readTask = sock.ReceiveAsync(readBuffer, CancellationToken.None);
+            }
+
+            switch (readTask.Status) {
+            case TaskStatus.Created:
+            case TaskStatus.WaitingForActivation:
+            case TaskStatus.WaitingToRun:
+            case TaskStatus.Running:
+            case TaskStatus.WaitingForChildrenToComplete:
+                yield return null;
+                continue;
+
+            case TaskStatus.RanToCompletion:
+                parseMessage(readTask.Result);
+                break;
+
+            case TaskStatus.Canceled:
+                break;
+            case TaskStatus.Faulted:
+                break;
+            }
+            readTask = null;
+            yield return null;
         }
-        if (sock == null) {
-            return;
-        }
-        readTask = sock.ReceiveAsync(readBuffer, CancellationToken.None);
-        WebSocketReceiveResult result = await readTask;
-        readTask = null;
-        string msg = Encoding.UTF8.GetString(readBuffer.Array, 0, result.Count);
+    }
+
+    private void parseMessage(WebSocketReceiveResult message) {
+        string msg = Encoding.UTF8.GetString(readBuffer.Array, 0, message.Count);
         string[] parts = msg.Split(new char[]{' '}, 2);
         if (parts.Length != 2) {
             Debug.LogFormat("dunno how to handle this msg: {0}", msg);
             return;
         }
-
         switch (parts[0]) {
         case "spawn-soul":
             SpawnSoul spawned = JsonUtility.FromJson<SpawnSoul>(parts[1]);
@@ -128,15 +155,19 @@ public class Networking : ScriptableObject {
     }
 
     private void onSpawnSoul(SpawnSoul spawn) {
-        Debug.LogFormat("spawn a soul: {0}", spawn);
+        Debug.LogFormat("spawn a soul: {0} at {1}", spawn.playerName, spawn.position);
         GameObject soul = Instantiate(soulPrefab, spawn.position, Quaternion.identity);
         soul.name = spawn.playerName;
 
         GameObject allSouls = GameObject.Find("Souls");
-        soul.transform.SetParent(allSouls.transform);
+        if (allSouls == null) {
+            Debug.LogError("unable to find souls container!");
+        } else {
+            soul.transform.SetParent(allSouls.transform);
 
-        SoulController sc = soul.GetComponent<SoulController>();
-        sc.playerName = spawn.playerName;
+            SoulController sc = soul.GetComponent<SoulController>();
+            sc.playerName = spawn.playerName;
+        }
     }
 
     private void onSoulCollected(CollectSoul collected) {
@@ -174,7 +205,7 @@ public class Networking : ScriptableObject {
         }
     }
 
-    private bool isConnected() {
+    public bool isConnected() {
         return sock != null && sock.State == WebSocketState.Open;
     }
 

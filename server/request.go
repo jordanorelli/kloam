@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
+
+	"github.com/jordanorelli/kloam/db"
 )
 
 type request struct {
@@ -75,17 +77,29 @@ type loginResult struct {
 }
 
 func (l *login) exec(s *server, from *player) {
-	res := loginResult{}
-	if err := s.db.CheckPassword(l.Username, l.Password); err != nil {
-		res.Error = err.Error()
-	} else {
-		res.Passed = true
-		from.username = l.Username
-
+	sendResult := func(res loginResult) {
+		b, _ := json.Marshal(res)
+		msg := fmt.Sprintf("login-result %s", string(b))
+		from.outbox <- msg
 	}
-	b, _ := json.Marshal(res)
-	msg := fmt.Sprintf("login-result %s", string(b))
-	from.outbox <- msg
+
+	row := db.Player{Name: l.Username}
+	if err := s.db.ReadPlayer(&row); err != nil {
+		sendResult(loginResult{
+			Error: fmt.Sprintf("failed to read player from database: %v", err),
+		})
+		return
+	}
+	fmt.Printf("login read row from database: %v\n", row)
+
+	if row.HasPassword(l.Password) {
+		sendResult(loginResult{Passed: true})
+		from.username = l.Username
+		from.id = row.ID
+	} else {
+		sendResult(loginResult{Error: "bad password"})
+		return
+	}
 
 	messages := make([]string, 0, len(s.souls))
 
@@ -105,7 +119,6 @@ func (l *login) exec(s *server, from *player) {
 			}
 		}
 	}()
-
 }
 
 type death struct {
@@ -114,6 +127,18 @@ type death struct {
 
 func (d *death) exec(s *server, from *player) {
 	s.Info("executing a death: %#v", d)
+
+	body := &db.Body{
+		PlayerID: from.id,
+		X:        d.Position.X,
+		Y:        d.Position.Y,
+		Z:        d.Position.Z,
+	}
+	s.Info("adding body: %#v", body)
+	if err := s.db.AddBody(body); err != nil {
+		s.Error("db error: %v", err)
+	}
+
 	_soul := soul{
 		PlayerName: from.username,
 		Position:   d.Position,

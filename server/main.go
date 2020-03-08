@@ -61,21 +61,21 @@ func runPlayerCreate(cmd *cobra.Command, args []string) {
 	}
 	defer conn.Close()
 
-	player := args[0]
+	player := db.Player{Name: args[0]}
 	var pass string
 	if len(args) > 1 {
 		pass = args[1]
 	} else {
 		pass = cryptostring(12)
 	}
-	salt := cryptostring(12)
+	player.SetPassword(pass)
 
-	if err := conn.CreatePlayer(player, pass, salt); err != nil {
+	if err := conn.CreatePlayer(&player); err != nil {
 		fmt.Fprintf(os.Stderr, "failed to create player: %v\n", err)
 		return
 	}
 
-	fmt.Printf("created:\n\tplayer:\t%s\n\tpass:\t%s\n", player, pass)
+	fmt.Printf("created:\n\tid:\t%d\n\tplayer:\t%s\n\tpass:\t%s\n", player.ID, player.Name, pass)
 }
 
 func runPlayerCheckPassword(cmd *cobra.Command, args []string) {
@@ -85,10 +85,15 @@ func runPlayerCheckPassword(cmd *cobra.Command, args []string) {
 	}
 	defer conn.Close()
 
-	player := args[0]
+	player := db.Player{Name: args[0]}
+	if err := conn.ReadPlayer(&player); err != nil {
+		fmt.Fprintf(os.Stderr, "unable to fetch player row: %v\n", err)
+		return
+	}
+
 	pass := args[1]
-	if err := conn.CheckPassword(player, pass); err != nil {
-		fmt.Fprintf(os.Stderr, "failed password check: %v\n", err)
+	if !player.HasPassword(pass) {
+		fmt.Fprintf(os.Stderr, "bad password\n", err)
 	}
 }
 
@@ -99,11 +104,19 @@ func runPlayerSetPassword(cmd *cobra.Command, args []string) {
 	}
 	defer conn.Close()
 
-	player := args[0]
-	pass := args[1]
-	salt := cryptostring(12)
-	if err := conn.SetPassword(player, pass, salt); err != nil {
-		fmt.Fprintf(os.Stderr, "failed to set password: %v\n", err)
+	player := db.Player{Name: args[0]}
+	if err := conn.ReadPlayer(&player); err != nil {
+		fmt.Fprintf(os.Stderr, "unable to read player record: %v\n", err)
+		return
+	}
+
+	if err := player.SetPassword(args[1]); err != nil {
+		fmt.Fprintf(os.Stderr, "unable to set player password: %v\n", err)
+		return
+	}
+
+	if err := conn.UpdatePlayer(&player); err != nil {
+		fmt.Fprintf(os.Stderr, "unable to save player changes: %v\n", err)
 	}
 }
 

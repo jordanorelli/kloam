@@ -13,6 +13,7 @@ type Body struct {
 	Z        float64
 	DiedAt   time.Time
 	FoundAt  *time.Time
+	FoundBy  *int
 }
 
 func (db *SQLite) ListBodies() ([]Body, error) {
@@ -38,6 +39,25 @@ func (db *SQLite) AddBody(body *Body) error {
 		values (?, ?, ?, ?);`, body.PlayerID, body.X, body.Y, body.Z)
 	if err != nil {
 		return fmt.Errorf("failed to add body to db: %w", err)
+	}
+	return nil
+}
+
+func (db *SQLite) ReadBody(body *Body) error {
+	args := make([]interface{}, 0, 1)
+	q := `select id, player, x, y, z, died_at from bodies`
+	if body.ID != 0 {
+		q += ` where id = ?`
+		args = append(args, body.ID)
+	} else {
+		q += ` where player = ?`
+		args = append(args, body.PlayerID)
+	}
+	q += ` and found_at is null`
+
+	row := db.db.QueryRow(q, args...)
+	if err := row.Scan(&body.ID, &body.PlayerID, &body.X, &body.Y, &body.Z, &body.DiedAt); err != nil {
+		return fmt.Errorf("failed to read body from db: %w", err)
 	}
 	return nil
 }

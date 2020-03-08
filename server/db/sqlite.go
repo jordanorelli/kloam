@@ -80,7 +80,6 @@ func (db *SQLite) ReadPlayer(p *Player) error {
 	if err := row.Scan(&p.ID, &p.Name, &p.Hash, &p.Salt); err != nil {
 		return fmt.Errorf("unable to read player row: %w", err)
 	}
-	fmt.Printf("read player from db: %v\n", p)
 	return nil
 }
 

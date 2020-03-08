@@ -2,6 +2,8 @@ package main
 
 import (
 	"crypto/rand"
+	"database/sql"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -120,6 +122,33 @@ func runPlayerSetPassword(cmd *cobra.Command, args []string) {
 	}
 }
 
+func runPlayerStatus(cmd *cobra.Command, args []string) {
+	conn, err := db.OpenSQLite(cmd.Flag("db").Value.String())
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "unable to open sqlite database: %v\n", err)
+	}
+	defer conn.Close()
+
+	player := db.Player{Name: args[0]}
+	if err := conn.ReadPlayer(&player); err != nil {
+		fmt.Fprintf(os.Stderr, "unable to read player record: %v\n", err)
+		return
+	}
+
+	body := db.Body{PlayerID: player.ID}
+	err = conn.ReadBody(&body)
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		fmt.Println("alive")
+		break
+	case err == nil:
+		fmt.Printf("dead since %v\n", body.DiedAt)
+		break
+	default:
+		fmt.Fprintf(os.Stderr, "unable to query for bodies: %v\n", err)
+	}
+}
+
 func main() {
 	cmd := &cobra.Command{
 		Use: "kloam",
@@ -163,6 +192,14 @@ func main() {
 		Run:   runPlayerSetPassword,
 	}
 	player.AddCommand(playerSetPassword)
+
+	playerStatus := &cobra.Command{
+		Use:   "status",
+		Short: "gets a player's status",
+		Args:  cobra.ExactArgs(1),
+		Run:   runPlayerStatus,
+	}
+	player.AddCommand(playerStatus)
 
 	cmd.Execute()
 }

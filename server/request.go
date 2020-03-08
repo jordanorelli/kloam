@@ -1,7 +1,9 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -72,8 +74,10 @@ type login struct {
 }
 
 type loginResult struct {
-	Passed bool   `json:"passed"`
-	Error  string `json:"error,omitempty"`
+	Passed bool      `json:"passed"`
+	Dead   bool      `json:"dead"`
+	DiedAt time.Time `json:"died_at"`
+	Error  string    `json:"error,omitempty"`
 }
 
 func (l *login) exec(s *server, from *player) {
@@ -93,12 +97,27 @@ func (l *login) exec(s *server, from *player) {
 	fmt.Printf("login read row from database: %v\n", row)
 
 	if row.HasPassword(l.Password) {
-		sendResult(loginResult{Passed: true})
 		from.username = l.Username
 		from.id = row.ID
 	} else {
 		sendResult(loginResult{Error: "bad password"})
 		return
+	}
+
+	body := db.Body{PlayerID: row.ID}
+	if err := s.db.ReadBody(&body); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			sendResult(loginResult{Passed: true})
+		} else {
+			sendResult(loginResult{Error: err.Error()})
+			return
+		}
+	} else {
+		sendResult(loginResult{
+			Passed: true,
+			Dead:   true,
+			DiedAt: body.DiedAt,
+		})
 	}
 
 	messages := make([]string, 0, len(s.souls))

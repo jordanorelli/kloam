@@ -61,3 +61,12 @@ func (db *SQLite) ReadBody(body *Body) error {
 	}
 	return nil
 }
+
+func (db *SQLite) FindBody(id, finder int) error {
+	q := `update bodies set found_at = CURRENT_TIMESTAMP, found_by = ? where id = ?`
+	_, err := db.db.Exec(q, finder, id)
+	if err != nil {
+		return fmt.Errorf("unable to claim body %d as found by %d: %w", id, finder, err)
+	}
+	return nil
+}

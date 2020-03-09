@@ -149,6 +149,36 @@ func runPlayerStatus(cmd *cobra.Command, args []string) {
 	}
 }
 
+func runPlayerRespawn(cmd *cobra.Command, args []string) {
+	conn, err := db.OpenSQLite(cmd.Flag("db").Value.String())
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "unable to open sqlite database: %v\n", err)
+	}
+	defer conn.Close()
+
+	player := db.Player{Name: args[0]}
+	if err := conn.ReadPlayer(&player); err != nil {
+		fmt.Fprintf(os.Stderr, "unable to read player record: %v\n", err)
+		return
+	}
+
+	body := db.Body{PlayerID: player.ID}
+	err = conn.ReadBody(&body)
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		fmt.Fprintf(os.Stderr, "player was not dead\n")
+		return
+	case err == nil:
+		break
+	default:
+		fmt.Fprintf(os.Stderr, "unable to query for bodies: %v\n", err)
+		return
+	}
+	if err := conn.FindBody(body.ID, 0); err != nil {
+		fmt.Fprintf(os.Stderr, "unable to respawn player %s: %v\n", args[0], err)
+	}
+}
+
 func main() {
 	cmd := &cobra.Command{
 		Use: "kloam",
@@ -200,6 +230,14 @@ func main() {
 		Run:   runPlayerStatus,
 	}
 	player.AddCommand(playerStatus)
+
+	playerRespawn := &cobra.Command{
+		Use:   "respawn",
+		Short: "respawn a player",
+		Args:  cobra.ExactArgs(1),
+		Run:   runPlayerRespawn,
+	}
+	player.AddCommand(playerRespawn)
 
 	cmd.Execute()
 }

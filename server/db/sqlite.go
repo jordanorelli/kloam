@@ -31,6 +31,10 @@ func OpenSQLite(path string) (*SQLite, error) {
 		fmt.Fprintf(os.Stderr, "failed to create players table: %v\n", err)
 	}
 
+	db.Exec(`insert or ignore
+		into players (id, name, phash, psalt)
+		values (0, "admin", "", "")`)
+
 	if _, err := db.Exec(`
 	create table if not exists bodies (
 		id integer primary key autoincrement,

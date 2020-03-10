@@ -143,6 +143,7 @@ public class Networking : ScriptableObject {
             break;
 
         case "login-result":
+            Debug.LogFormat("received message: {0}", msg);
             LoginResult login = JsonUtility.FromJson<LoginResult>(parts[1]);
             onLoginResult(login);
             break;
@@ -247,5 +248,6 @@ public class Networking : ScriptableObject {
     private struct LoginResult {
         public bool passed;
         public string error;
+        public bool dead;
     }
 }
